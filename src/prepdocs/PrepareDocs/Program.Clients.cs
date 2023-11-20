@@ -2,7 +2,8 @@
 
 
 using EmbedFunctions.Services;
-using Microsoft.Extensions.Logging;
+
+using Microsoft.Extensions.Configuration;
 
 internal static partial class Program
 {
@@ -11,43 +12,60 @@ internal static partial class Program
     private static DocumentAnalysisClient? s_documentClient;
     private static SearchIndexClient? s_searchIndexClient;
     private static SearchClient? s_searchClient;
-    private static OpenAIClient? s_openAIClient;
+    private static OpenAIClient? s_openAiClient;
 
     private static readonly SemaphoreSlim s_corpusContainerLock = new(1);
     private static readonly SemaphoreSlim s_containerLock = new(1);
     private static readonly SemaphoreSlim s_documentLock = new(1);
     private static readonly SemaphoreSlim s_searchIndexLock = new(1);
     private static readonly SemaphoreSlim s_searchLock = new(1);
-    private static readonly SemaphoreSlim s_openAILock = new(1);
+    private static readonly SemaphoreSlim s_openAiLock = new(1);
     private static readonly SemaphoreSlim s_embeddingLock = new(1);
 
-    private static Task<AzureSearchEmbedService> GetAzureSearchEmbedService(AppOptions options) =>
+    public static IConfiguration Configuration { get; set; }
+
+    //TODO change to Shared I Configuration class
+    public static IConfiguration GetConfiguration()
+    {
+        var builder = new ConfigurationBuilder()  
+            .SetBasePath(Directory.GetCurrentDirectory())  
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);  
+  
+        IConfiguration configuration = builder.Build();
+
+        return configuration;
+    }
+
+    private static Task<AzureSearchEmbedService> GetAzureSearchEmbedService(ConsoleAppOptions options) =>
         GetLazyClientAsync<AzureSearchEmbedService>(options, s_embeddingLock, async o =>
         {
-            var searchIndexClient = await GetSearchIndexClientAsync(o);
-            var searchClient = await GetSearchClientAsync(o);
-            var documentClient = await GetFormRecognizerClientAsync(o);
-            var blobContainerClient = await GetCorpusBlobContainerClientAsync(o);
-            var openAIClient = await GetAzureOpenAIClientAsync(o);
-            var embeddingModelName = o.EmbeddingModelName ?? throw new ArgumentNullException(nameof(o.EmbeddingModelName));
-            var searchIndexName = o.SearchIndexName ?? throw new ArgumentNullException(nameof(o.SearchIndexName));
+            Configuration = GetConfiguration();
 
-            return new AzureSearchEmbedService(openAIClient, embeddingModelName, searchClient, searchIndexName, searchIndexClient, documentClient, blobContainerClient, null);
+            var searchIndexClient = await GetSearchIndexClient(o);
+            var searchClient = await GetSearchClient(o);
+            var documentClient = await GetFormRecognizerClient(o);
+            var blobContainerClient = await GetCorpusBlobContainerClient(o);
+            var openAiClient = await GetAzureOpenAiClient(o);
+            var embeddingModelName = Configuration["AZURE_OPENAI_EMBEDDING_DEPLOYMENT"];
+            var searchIndexName = Configuration["AzureSearchIndex"];
+
+            return new AzureSearchEmbedService(openAiClient, embeddingModelName, searchClient, searchIndexName, searchIndexClient, documentClient, blobContainerClient, null);
         });
 
-    private static Task<BlobContainerClient> GetCorpusBlobContainerClientAsync(AppOptions options) =>
+
+    private static Task<BlobContainerClient> GetCorpusBlobContainerClient(ConsoleAppOptions options) =>
         GetLazyClientAsync<BlobContainerClient>(options, s_corpusContainerLock, static async o =>
         {
             if (s_corpusContainerClient is null)
             {
-                var endpoint = o.StorageServiceBlobEndpoint;
-                ArgumentNullException.ThrowIfNullOrEmpty(endpoint);
+                var connectionString = Configuration["AzureStorageAccountConnectionString"];
+                ArgumentNullException.ThrowIfNullOrEmpty(connectionString);
 
-                var blobService = new BlobServiceClient(
-                    new Uri(endpoint),
-                    DefaultCredential);
+                var blobService = new BlobServiceClient(connectionString);
 
-                s_corpusContainerClient = blobService.GetBlobContainerClient("corpus");
+                var azureStorageContainer = Configuration["AzureStorageContainer"];
+
+                s_corpusContainerClient = blobService.GetBlobContainerClient(azureStorageContainer);
 
                 await s_corpusContainerClient.CreateIfNotExistsAsync();
             }
@@ -55,7 +73,7 @@ internal static partial class Program
             return s_corpusContainerClient;
         });
 
-    private static Task<BlobContainerClient> GetBlobContainerClientAsync(AppOptions options) =>
+    private static Task<BlobContainerClient> GetBlobContainerClient(ConsoleAppOptions options) =>
         GetLazyClientAsync<BlobContainerClient>(options, s_containerLock, static async o =>
         {
             if (s_containerClient is null)
@@ -78,17 +96,19 @@ internal static partial class Program
             return s_containerClient;
         });
 
-    private static Task<DocumentAnalysisClient> GetFormRecognizerClientAsync(AppOptions options) =>
+    private static Task<DocumentAnalysisClient> GetFormRecognizerClient(ConsoleAppOptions options) =>
         GetLazyClientAsync<DocumentAnalysisClient>(options, s_documentLock, static async o =>
         {
             if (s_documentClient is null)
             {
-                var endpoint = o.FormRecognizerServiceEndpoint;
-                ArgumentNullException.ThrowIfNullOrEmpty(endpoint);
+                var azureOpenAiServiceEndpoint = Configuration["AzureDocumentIntelligenceEndpoint"] ?? throw new ArgumentNullException();
+                var key = Configuration["AzureDocumentIntelligenceEndpointKey"] ?? throw new ArgumentNullException();
+
+                var credential = new AzureKeyCredential(key!);
 
                 s_documentClient = new DocumentAnalysisClient(
-                    new Uri(endpoint),
-                    DefaultCredential,
+                    new Uri(azureOpenAiServiceEndpoint),
+                    credential,
                     new DocumentAnalysisClientOptions
                     {
                         Diagnostics =
@@ -103,17 +123,24 @@ internal static partial class Program
             return s_documentClient;
         });
 
-    private static Task<SearchIndexClient> GetSearchIndexClientAsync(AppOptions options) =>
+    private static Task<SearchIndexClient> GetSearchIndexClient(ConsoleAppOptions options) =>
         GetLazyClientAsync<SearchIndexClient>(options, s_searchIndexLock, static async o =>
         {
             if (s_searchIndexClient is null)
             {
+                var (azureSearchServiceEndpoint, azureSearchIndex, key) =
+                    (Configuration["AzureSearchServiceEndpoint"], Configuration["AzureSearchIndex"], Configuration["AzureSearchServiceEndpointKey"]);
+
                 var endpoint = o.SearchServiceEndpoint;
+
+
                 ArgumentNullException.ThrowIfNullOrEmpty(endpoint);
 
+                var credential = new AzureKeyCredential(key!);
+
                 s_searchIndexClient = new SearchIndexClient(
-                    new Uri(endpoint),
-                    DefaultCredential);
+                    new Uri(azureSearchServiceEndpoint),
+                    credential);
             }
 
             await Task.CompletedTask;
@@ -121,18 +148,20 @@ internal static partial class Program
             return s_searchIndexClient;
         });
 
-    private static Task<SearchClient> GetSearchClientAsync(AppOptions options) =>
+    private static Task<SearchClient> GetSearchClient(ConsoleAppOptions options) =>
         GetLazyClientAsync<SearchClient>(options, s_searchLock, async o =>
         {
             if (s_searchClient is null)
             {
-                var endpoint = o.SearchServiceEndpoint;
-                ArgumentNullException.ThrowIfNullOrEmpty(endpoint);
+                var (azureSearchServiceEndpoint, azureSearchIndex, key) =
+                    (Configuration["AzureSearchServiceEndpoint"], Configuration["AzureSearchIndex"], Configuration["AzureSearchServiceEndpointKey"]);
+
+                ArgumentNullException.ThrowIfNullOrEmpty(azureSearchServiceEndpoint);
+
+                var credential = new AzureKeyCredential(key!);
 
                 s_searchClient = new SearchClient(
-                    new Uri(endpoint),
-                    o.SearchIndexName,
-                    DefaultCredential);
+                    new Uri(azureSearchServiceEndpoint), azureSearchIndex, credential);
             }
 
             await Task.CompletedTask;
@@ -140,25 +169,28 @@ internal static partial class Program
             return s_searchClient;
         });
 
-    private static Task<OpenAIClient> GetAzureOpenAIClientAsync(AppOptions options) =>
-       GetLazyClientAsync<OpenAIClient>(options, s_openAILock, async o =>
+    private static Task<OpenAIClient> GetAzureOpenAiClient(ConsoleAppOptions options) =>
+       GetLazyClientAsync<OpenAIClient>(options, s_openAiLock, async o =>
        {
-           if (s_openAIClient is null)
+           if (s_openAiClient is null)
            {
-               var endpoint = o.AzureOpenAIServiceEndpoint;
-               ArgumentNullException.ThrowIfNullOrEmpty(endpoint);
-               s_openAIClient = new OpenAIClient(
-                   new Uri(endpoint),
-                   DefaultCredential);
+               var (azureOpenAiServiceEndpoint, key) = (Configuration["AzureOpenAiServiceEndpoint"], Configuration["AzureOpenAiServiceEndpointKey"]);
+               ArgumentNullException.ThrowIfNullOrEmpty(azureOpenAiServiceEndpoint);
+
+               var credential = new AzureKeyCredential(key!);
+
+               s_openAiClient = new OpenAIClient(
+                   new Uri(azureOpenAiServiceEndpoint),
+                   credential);
            }
            await Task.CompletedTask;
-           return s_openAIClient;
+           return s_openAiClient;
        });
 
     private static async Task<TClient> GetLazyClientAsync<TClient>(
-        AppOptions options,
+        ConsoleAppOptions options,
         SemaphoreSlim locker,
-        Func<AppOptions, Task<TClient>> factory)
+        Func<ConsoleAppOptions, Task<TClient>> factory)
     {
         await locker.WaitAsync();
 

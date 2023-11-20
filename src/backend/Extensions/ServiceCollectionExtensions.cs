@@ -39,6 +39,7 @@ internal static class ServiceCollectionExtensions
             var searchClient = new SearchClient(
                 new Uri(azureSearchServiceEndpoint), azureSearchIndex, credential);
 
+
             return searchClient;
         });
 
