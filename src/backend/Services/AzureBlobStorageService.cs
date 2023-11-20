@@ -10,7 +10,7 @@ internal sealed class AzureBlobStorageService(BlobContainerClient container)
     {
         try
         {
-            List<string> uploadedFiles = [];
+            List<string> uploadedFiles = new();
             foreach (var file in files)
             {
                 var fileName = file.FileName;
@@ -57,7 +57,7 @@ internal sealed class AzureBlobStorageService(BlobContainerClient container)
                     """);
             }
 
-            return new UploadDocumentsResponse([.. uploadedFiles]);
+            return new UploadDocumentsResponse(uploadedFiles.ToArray());
         }
 #pragma warning disable CA1031 // Do not catch general exception types
         catch (Exception ex)
