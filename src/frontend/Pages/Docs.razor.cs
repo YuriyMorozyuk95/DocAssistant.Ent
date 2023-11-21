@@ -14,7 +14,7 @@ public sealed partial class Docs : IDisposable
 
     // Store a cancelation token that will be used to cancel if the user disposes of this component.
     private readonly CancellationTokenSource _cancellationTokenSource = new();
-    private readonly HashSet<DocumentResponse> _documents = [];
+    private readonly HashSet<DocumentResponse> _documents = new();
 
     [Inject]
     public required ApiClient Client { get; set; }
@@ -29,7 +29,7 @@ public sealed partial class Docs : IDisposable
     public required ILogger<Docs> Logger { get; set; }
 
     [Inject]
-    public required IJSRuntime JSRuntime { get; set; }
+    public required IJSRuntime JsRuntime { get; set; }
 
     private bool FilesSelected => _fileUpload is { Files.Count: > 0 };
 
@@ -67,7 +67,7 @@ public sealed partial class Docs : IDisposable
     {
         if (_fileUpload is { Files.Count: > 0 })
         {
-            var cookie = await JSRuntime.InvokeAsync<string>("getCookie", "XSRF-TOKEN");
+            var cookie = await JsRuntime.InvokeAsync<string>("getCookie", "XSRF-TOKEN");
 
             var result = await Client.UploadDocumentsAsync(
                 _fileUpload.Files, MaxIndividualFileSize, cookie);

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 
+using Azure.Core.Pipeline;
 using EmbedFunctions.Services;
 
 using Microsoft.Extensions.Configuration;
@@ -21,8 +22,15 @@ internal static partial class Program
     private static readonly SemaphoreSlim s_searchLock = new(1);
     private static readonly SemaphoreSlim s_openAiLock = new(1);
     private static readonly SemaphoreSlim s_embeddingLock = new(1);
+    private static IConfiguration? s_configuration;
 
-    public static IConfiguration Configuration { get; set; }
+    public static IConfiguration Configuration
+    {
+        get
+        {
+            return s_configuration ??= GetConfiguration();
+        }
+    }
 
     //TODO change to Shared I Configuration class
     public static IConfiguration GetConfiguration()
@@ -39,8 +47,6 @@ internal static partial class Program
     private static Task<AzureSearchEmbedService> GetAzureSearchEmbedService(ConsoleAppOptions options) =>
         GetLazyClientAsync<AzureSearchEmbedService>(options, s_embeddingLock, async o =>
         {
-            Configuration = GetConfiguration();
-
             var searchIndexClient = await GetSearchIndexClient(o);
             var searchClient = await GetSearchClient(o);
             var documentClient = await GetFormRecognizerClient(o);
@@ -131,16 +137,23 @@ internal static partial class Program
                 var (azureSearchServiceEndpoint, azureSearchIndex, key) =
                     (Configuration["AzureSearchServiceEndpoint"], Configuration["AzureSearchIndex"], Configuration["AzureSearchServiceEndpointKey"]);
 
-                var endpoint = o.SearchServiceEndpoint;
-
-
-                ArgumentNullException.ThrowIfNullOrEmpty(endpoint);
+                ArgumentNullException.ThrowIfNullOrEmpty(azureSearchServiceEndpoint);
 
                 var credential = new AzureKeyCredential(key!);
 
                 s_searchIndexClient = new SearchIndexClient(
                     new Uri(azureSearchServiceEndpoint),
-                    credential);
+                    credential, new SearchClientOptions
+                    {
+                        Transport = new HttpClientTransport(new HttpClient(new HttpClientHandler ()
+                        {
+                            Proxy = new WebProxy()
+                            {
+                                BypassProxyOnLocal = false,  
+                                UseDefaultCredentials = true,
+                            }
+                        }))
+                    });
             }
 
             await Task.CompletedTask;

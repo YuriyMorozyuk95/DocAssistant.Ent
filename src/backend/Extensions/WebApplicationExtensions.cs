@@ -20,9 +20,6 @@ internal static class WebApplicationExtensions
         // Get all documents
         api.MapGet("documents", OnGetDocumentsAsync);
 
-        // Get DALL-E image result from prompt
-        api.MapPost("images", OnPostImagePromptAsync);
-
         api.MapGet("enableLogout", OnGetEnableLogout);
 
         return app;
@@ -123,10 +120,15 @@ internal static class WebApplicationExtensions
                 builder.Path += $"/{blob.Name}";
 
                 var metadata = blob.Metadata;
-                var documentProcessingStatus = GetMetadataEnumOrDefault<DocumentProcessingStatus>(
-                    metadata, nameof(DocumentProcessingStatus), DocumentProcessingStatus.NotProcessed);
-                var embeddingType = GetMetadataEnumOrDefault<EmbeddingType>(
-                    metadata, nameof(EmbeddingType), EmbeddingType.AzureSearch);
+                var documentProcessingStatus = GetMetadataEnumOrDefault(
+                    metadata,
+                    nameof(DocumentProcessingStatus),
+                    DocumentProcessingStatus.NotProcessed);
+
+                var embeddingType = GetMetadataEnumOrDefault(
+                    metadata,
+                    nameof(EmbeddingType),
+                    EmbeddingType.AzureSearch);
 
                 yield return new(
                     blob.Name,
@@ -140,29 +142,14 @@ internal static class WebApplicationExtensions
                 static TEnum GetMetadataEnumOrDefault<TEnum>(
                     IDictionary<string, string> metadata,
                     string key,
-                    TEnum @default) where TEnum : struct => metadata.TryGetValue(key, out var value)
-                        && Enum.TryParse<TEnum>(value, out var status)
-                            ? status
-                            : @default;
+                    TEnum @default) where TEnum : struct
+                {
+                    return metadata.TryGetValue(key, out var value)
+                           && Enum.TryParse<TEnum>(value, out var status)
+                        ? status
+                        : @default;
+                }
             }
         }
-    }
-
-    private static async Task<IResult> OnPostImagePromptAsync(
-        PromptRequest prompt,
-        OpenAIClient client,
-        IConfiguration config,
-        CancellationToken cancellationToken)
-    {
-        var result = await client.GetImageGenerationsAsync(new ImageGenerationOptions
-        {
-            Prompt = prompt.Prompt,
-        },
-        cancellationToken);
-
-        var imageUrls = result.Value.Data.Select(i => i.Url).ToList();
-        var response = new ImageResponse(result.Value.Created, imageUrls);
-
-        return TypedResults.Ok(response);
     }
 }

@@ -4,10 +4,15 @@ using EmbedFunctions.Services;
 
 using Microsoft.Extensions.Configuration;
 
+// Set a handler for the root command.  
 s_rootCommand.SetHandler(
     async (context) =>
     {
-        var consoleAppOptions =  Configuration.Get<ConsoleAppOptions>();
+        // Create a new instance of ConsoleAppOptions and bind it to the "ConsoleAppOptions" section of the configuration.  
+        var consoleAppOptions = new ConsoleAppOptions();  
+        Configuration.GetSection("ConsoleAppOptions").Bind(consoleAppOptions);  
+
+        // If the "RemoveAll" option is set, remove all blobs and indices.
         if (consoleAppOptions.RemoveAll)
         {
             await RemoveBlobsAsync(consoleAppOptions);
@@ -15,25 +20,29 @@ s_rootCommand.SetHandler(
         }
         else
         {
-           
-            var searchIndexName = Configuration["AzureSearchIndex"];
+            // Get an instance of the Azure Search Embed Service. 
             var embedService = await GetAzureSearchEmbedService(consoleAppOptions);
 
+            // Ensure that the search index exists, or create if not exist. 
             await embedService.EnsureSearchIndexAsync(consoleAppOptions.SearchIndexName);
 
+            // Create a new Matcher and add the files specified in the consoleAppOptions to it.
             Matcher matcher = new();
             matcher.AddInclude(consoleAppOptions.Files);
 
+            // Execute the matcher on the current directory.
             var results = matcher.Execute(
                 new DirectoryInfoWrapper(
                     new DirectoryInfo(Directory.GetCurrentDirectory())));
 
+            // If the matcher found any matches, get the paths of the files. Otherwise, create an empty array. 
             var files = results.HasMatches
                 ? results.Files.Select(f => f.Path).ToArray()
                 : Array.Empty<string>();
 
             context.Console.WriteLine($"Processing {files.Length} files...");
 
+            // Create a task for each file to be processed. 
             var tasks = Enumerable.Range(0, files.Length)
                 .Select(i =>
                 {
