@@ -6,18 +6,15 @@ namespace MinimalApi.Extensions;
 
 internal static class ServiceCollectionExtensions
 {
-    private static readonly DefaultAzureCredential s_azureCredential = new();
-
     internal static IServiceCollection AddAzureServices(this IServiceCollection services)
     {
         services.AddSingleton<BlobServiceClient>(sp =>
         {
             var config = sp.GetRequiredService<IConfiguration>();
-            var azureStorageAccountEndpoint = config["AzureStorageAccountEndpoint"];
-            ArgumentNullException.ThrowIfNullOrEmpty(azureStorageAccountEndpoint);
+            var azureStorageAccountConnectionString = config["AzureStorageAccountConnectionString"];
+            ArgumentNullException.ThrowIfNullOrEmpty(azureStorageAccountConnectionString);
 
-            var blobServiceClient = new BlobServiceClient(
-                new Uri(azureStorageAccountEndpoint), s_azureCredential);
+            var blobServiceClient = new BlobServiceClient(azureStorageAccountConnectionString);
 
             return blobServiceClient;
         });
@@ -41,6 +38,7 @@ internal static class ServiceCollectionExtensions
 
             var searchClient = new SearchClient(
                 new Uri(azureSearchServiceEndpoint), azureSearchIndex, credential);
+
 
             return searchClient;
         });

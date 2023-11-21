@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace EmbedFunctions.Services;
 
 public sealed partial class AzureSearchEmbedService(
-    OpenAIClient openAIClient,
+    OpenAIClient openAiClient,
     string embeddingModelName,
     SearchClient indexSectionClient,
     string searchIndexName,
@@ -136,7 +136,7 @@ public sealed partial class AzureSearchEmbedService(
             WaitUntil.Started, "prebuilt-layout", ms);
 
         var offset = 0;
-        List<PageDetail> pageMap = [];
+        List<PageDetail> pageMap = new();
 
         var results = await operation.WaitForCompletionAsync();
         var pages = results.Value.Pages;
@@ -167,7 +167,7 @@ public sealed partial class AzureSearchEmbedService(
 
             // Build page text by replacing characters in table spans with table HTML
             StringBuilder pageText = new();
-            HashSet<int> addedTables = [];
+            HashSet<int> addedTables = new();
             for (int j = 0; j < tableChars.Length; j++)
             {
                 if (tableChars[j] == -1)
@@ -195,12 +195,7 @@ public sealed partial class AzureSearchEmbedService(
         var rows = new List<DocumentTableCell>[table.RowCount];
         for (int i = 0; i < table.RowCount; i++)
         {
-            rows[i] =
-            [
-                .. table.Cells.Where(c => c.RowIndex == i)
-                                .OrderBy(c => c.ColumnIndex)
-,
-            ];
+            rows[i] = table.Cells.Where(c => c.RowIndex == i).OrderBy(c => c.ColumnIndex).ToList();
         }
 
         foreach (var rowCells in rows)
@@ -252,9 +247,9 @@ public sealed partial class AzureSearchEmbedService(
     private IEnumerable<Section> CreateSections(
         IReadOnlyList<PageDetail> pageMap, string blobName)
     {
-        const int MaxSectionLength = 1_000;
-        const int SentenceSearchLimit = 100;
-        const int SectionOverlap = 100;
+        const int maxSectionLength = 1_000;
+        const int sentenceSearchLimit = 100;
+        const int sectionOverlap = 100;
 
         var sentenceEndings = new[] { '.', '!', '?' };
         var wordBreaks = new[] { ',', ';', ':', ' ', '(', ')', '[', ']', '{', '}', '\t', '\n' };
@@ -265,10 +260,10 @@ public sealed partial class AzureSearchEmbedService(
 
         logger?.LogInformation("Splitting '{BlobName}' into sections", blobName);
 
-        while (start + SectionOverlap < length)
+        while (start + sectionOverlap < length)
         {
             var lastWord = -1;
-            end = start + MaxSectionLength;
+            end = start + maxSectionLength;
 
             if (end > length)
             {
@@ -277,7 +272,7 @@ public sealed partial class AzureSearchEmbedService(
             else
             {
                 // Try to find the end of the sentence
-                while (end < length && (end - start - MaxSectionLength) < SentenceSearchLimit && !sentenceEndings.Contains(allText[end]))
+                while (end < length && (end - start - maxSectionLength) < sentenceSearchLimit && !sentenceEndings.Contains(allText[end]))
                 {
                     if (wordBreaks.Contains(allText[end]))
                     {
@@ -299,8 +294,8 @@ public sealed partial class AzureSearchEmbedService(
 
             // Try to find the start of the sentence or at least a whole word boundary
             lastWord = -1;
-            while (start > 0 && start > end - MaxSectionLength -
-                (2 * SentenceSearchLimit) && !sentenceEndings.Contains(allText[start]))
+            while (start > 0 && start > end - maxSectionLength -
+                (2 * sentenceSearchLimit) && !sentenceEndings.Contains(allText[start]))
             {
                 if (wordBreaks.Contains(allText[start]))
                 {
@@ -327,7 +322,7 @@ public sealed partial class AzureSearchEmbedService(
                 SourceFile: blobName);
 
             var lastTableStart = sectionText.LastIndexOf("<table", StringComparison.Ordinal);
-            if (lastTableStart > 2 * SentenceSearchLimit && lastTableStart > sectionText.LastIndexOf("</table", StringComparison.Ordinal))
+            if (lastTableStart > 2 * sentenceSearchLimit && lastTableStart > sectionText.LastIndexOf("</table", StringComparison.Ordinal))
             {
                 // If the section ends with an unclosed table, we need to start the next section with the table.
                 // If table starts inside SentenceSearchLimit, we ignore it, as that will cause an infinite loop for tables longer than MaxSectionLength
@@ -343,15 +338,15 @@ public sealed partial class AzureSearchEmbedService(
                         lastTableStart);
                 }
 
-                start = Math.Min(end - SectionOverlap, start + lastTableStart);
+                start = Math.Min(end - sectionOverlap, start + lastTableStart);
             }
             else
             {
-                start = end - SectionOverlap;
+                start = end - sectionOverlap;
             }
         }
 
-        if (start + SectionOverlap < end)
+        if (start + sectionOverlap < end)
         {
             yield return new Section(
                 Id: MatchInSetRegex().Replace($"{blobName}-{start}", "_").TrimStart('_'),
@@ -393,8 +388,8 @@ public sealed partial class AzureSearchEmbedService(
         var batch = new IndexDocumentsBatch<SearchDocument>();
         foreach (var section in sections)
         {
-            var embeddings = await openAIClient.GetEmbeddingsAsync(embeddingModelName, new Azure.AI.OpenAI.EmbeddingsOptions(section.Content.Replace('\r', ' ')));
-            var embedding = embeddings.Value.Data.FirstOrDefault()?.Embedding.ToArray() ?? [];
+            var embeddings = await openAiClient.GetEmbeddingsAsync(embeddingModelName, new Azure.AI.OpenAI.EmbeddingsOptions(section.Content.Replace('\r', ' ')));
+            var embedding = embeddings.Value.Data.FirstOrDefault()?.Embedding.ToArray() ?? Array.Empty<float>();
             batch.Actions.Add(new IndexDocumentsAction<SearchDocument>(
                 IndexActionType.MergeOrUpload,
                 new SearchDocument

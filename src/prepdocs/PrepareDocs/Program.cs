@@ -2,50 +2,62 @@
 
 using EmbedFunctions.Services;
 
+using Microsoft.Extensions.Configuration;
+
+// Set a handler for the root command.  
 s_rootCommand.SetHandler(
     async (context) =>
     {
-        var options = GetParsedAppOptions(context);
-        if (options.RemoveAll)
+        // Create a new instance of ConsoleAppOptions and bind it to the "ConsoleAppOptions" section of the configuration.  
+        var consoleAppOptions = new ConsoleAppOptions();  
+        Configuration.GetSection("ConsoleAppOptions").Bind(consoleAppOptions);  
+
+        // If the "RemoveAll" option is set, remove all blobs and indices.
+        if (consoleAppOptions.RemoveAll)
         {
-            await RemoveBlobsAsync(options);
-            await RemoveFromIndexAsync(options);
+            await RemoveBlobsAsync(consoleAppOptions);
+            await RemoveFromIndexAsync(consoleAppOptions);
         }
         else
         {
-            var searchIndexName = options.SearchIndexName ?? throw new ArgumentNullException(nameof(options.SearchIndexName));
-            var embedService = await GetAzureSearchEmbedService(options);
+            // Get an instance of the Azure Search Embed Service. 
+            var embedService = await GetAzureSearchEmbedService(consoleAppOptions);
 
-            await embedService.EnsureSearchIndexAsync(options.SearchIndexName);
+            // Ensure that the search index exists, or create if not exist. 
+            await embedService.EnsureSearchIndexAsync(consoleAppOptions.SearchIndexName);
 
+            // Create a new Matcher and add the files specified in the consoleAppOptions to it.
             Matcher matcher = new();
-            matcher.AddInclude(options.Files);
+            matcher.AddInclude(consoleAppOptions.Files);
 
+            // Execute the matcher on the current directory.
             var results = matcher.Execute(
                 new DirectoryInfoWrapper(
                     new DirectoryInfo(Directory.GetCurrentDirectory())));
 
+            // If the matcher found any matches, get the paths of the files. Otherwise, create an empty array. 
             var files = results.HasMatches
                 ? results.Files.Select(f => f.Path).ToArray()
                 : Array.Empty<string>();
 
             context.Console.WriteLine($"Processing {files.Length} files...");
 
+            // Create a task for each file to be processed. 
             var tasks = Enumerable.Range(0, files.Length)
                 .Select(i =>
                 {
                     var fileName = files[i];
-                    return ProcessSingleFileAsync(options, fileName, embedService);
+                    return ProcessSingleFileAsync(consoleAppOptions, fileName, embedService);
                 });
 
             await Task.WhenAll(tasks);
 
             // ReSharper disable once InconsistentNaming
-            static async Task ProcessSingleFileAsync(AppOptions options, string fileName, IEmbedService embedService)
+            static async Task ProcessSingleFileAsync(ConsoleAppOptions options, string fileName, IEmbedService embedService)
             {
                 if (options.Verbose)
                 {
-                    options.Console.WriteLine($"Processing '{fileName}'");
+                    Console.WriteLine($"Processing '{fileName}'");
                 }
 
                 if (options.Remove)
@@ -69,19 +81,19 @@ return await s_rootCommand.InvokeAsync(args);
 
 // ReSharper disable once InconsistentNaming
 static async ValueTask RemoveBlobsAsync(
-    AppOptions options, string? fileName = null)
+    ConsoleAppOptions options, string? fileName = null)
 {
     if (options.Verbose)
     {
-        options.Console.WriteLine($"Removing blobs for '{fileName ?? "all"}'");
+        Console.WriteLine($"Removing blobs for '{fileName ?? "all"}'");
     }
 
     var prefix = string.IsNullOrWhiteSpace(fileName)
         ? Path.GetFileName(fileName)
         : null;
 
-    var getContainerClientTask = GetBlobContainerClientAsync(options);
-    var getCorpusClientTask = GetCorpusBlobContainerClientAsync(options);
+    var getContainerClientTask = GetBlobContainerClient(options);
+    var getCorpusClientTask = GetCorpusBlobContainerClient(options);
     var clientTasks = new[] { getContainerClientTask, getCorpusClientTask };
 
     await Task.WhenAll(clientTasks);
@@ -109,16 +121,16 @@ static async ValueTask RemoveBlobsAsync(
 
 // ReSharper disable once InconsistentNaming
 static async ValueTask RemoveFromIndexAsync(
-    AppOptions options, string? fileName = null)
+    ConsoleAppOptions options, string? fileName = null)
 {
     if (options.Verbose)
     {
-        options.Console.WriteLine($"""
+        Console.WriteLine($"""
             Removing sections from '{fileName ?? "all"}' from search index '{options.SearchIndexName}.'
             """);
     }
 
-    var searchClient = await GetSearchClientAsync(options);
+    var searchClient = await GetSearchClient(options);
 
     while (true)
     {
@@ -162,9 +174,9 @@ static async ValueTask RemoveFromIndexAsync(
 
 // ReSharper disable once InconsistentNaming
 static async ValueTask UploadBlobsAndCreateIndexAsync(
-    AppOptions options, string fileName, IEmbedService embeddingService)
+    ConsoleAppOptions options, string fileName, IEmbedService embeddingService)
 {
-    var container = await GetBlobContainerClientAsync(options);
+    var container = await GetBlobContainerClient(options);
 
     // If it's a PDF, split it into single pages.
     if (Path.GetExtension(fileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase))
