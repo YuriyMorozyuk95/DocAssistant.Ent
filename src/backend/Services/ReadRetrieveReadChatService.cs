@@ -1,5 +1,9 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using Azure;
+
+using Microsoft.SemanticKernel;
+
 namespace MinimalApi.Services;
 
 public class ReadRetrieveReadChatService
@@ -21,9 +25,10 @@ public class ReadRetrieveReadChatService
         var embeddingModelName = configuration["AzureOpenAiEmbeddingDeployment"];
         if (!string.IsNullOrEmpty(embeddingModelName))
         {
-            var endpoint = configuration["AzureOpenAiServiceEndpoint"];
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(endpoint);
-            kernelBuilder = kernelBuilder.WithAzureTextEmbeddingGenerationService(embeddingModelName, endpoint, new DefaultAzureCredential());
+            var (azureOpenAiServiceEndpoint, key) = (configuration["AzureOpenAiServiceEndpoint"], configuration["AzureOpenAiServiceEndpointKey"]);
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(azureOpenAiServiceEndpoint);
+
+            kernelBuilder = kernelBuilder.WithAzureTextEmbeddingGenerationService(embeddingModelName, azureOpenAiServiceEndpoint, key!);
         }
         _kernel = kernelBuilder.Build();
         _configuration = configuration;

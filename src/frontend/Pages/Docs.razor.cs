@@ -118,4 +118,10 @@ public sealed partial class Docs : IDisposable
             });
 
     public void Dispose() => _cancellationTokenSource.Cancel();
+
+    private async Task SynchronizeDocumentsAsync()
+    {
+        var cookie = await JsRuntime.InvokeAsync<string>("getCookie", "XSRF-TOKEN");
+        await Client.SynchronizeDocumentsAsync(cookie);
+    }
 }

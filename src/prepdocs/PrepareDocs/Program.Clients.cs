@@ -134,10 +134,8 @@ internal static partial class Program
         {
             if (s_searchIndexClient is null)
             {
-                var (azureSearchServiceEndpoint, azureSearchIndex, key) =
-                    (Configuration["AzureSearchServiceEndpoint"], Configuration["AzureSearchIndex"], Configuration["AzureSearchServiceEndpointKey"]);
-
-                ArgumentNullException.ThrowIfNullOrEmpty(azureSearchServiceEndpoint);
+                var (azureSearchServiceEndpoint, key) =
+                    (Configuration["AzureSearchServiceEndpoint"], Configuration["AzureSearchServiceEndpointKey"]);
 
                 var credential = new AzureKeyCredential(key!);
 
