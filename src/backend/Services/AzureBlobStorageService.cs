@@ -2,10 +2,18 @@
 
 namespace MinimalApi.Services;
 
-internal sealed class AzureBlobStorageService(BlobContainerClient container)
+internal sealed class AzureBlobStorageService
 {
+    private readonly IStorageService _storageService;
+
+    public AzureBlobStorageService(IStorageService storageService)
+    {
+        _storageService = storageService;
+    }
     internal async Task<UploadDocumentsResponse> UploadFilesAsync(IEnumerable<IFormFile> files, CancellationToken cancellationToken)
     {
+        var container = await _storageService.GetInputBlobContainerClient();
+
         try
         {
             List<string> uploadedFiles = new();

@@ -11,38 +11,39 @@ public interface IUploaderDocumentService
 }
 public class UploaderDocumentService : IUploaderDocumentService
 {
-    private readonly BlobContainerClient _blobContainerClient;
     private readonly SearchIndexClient _searchClient;
     private readonly BlobServiceClient _blobServiceClient;
     private readonly ILogger<UploaderDocumentService> _logger;
     private readonly IConfiguration _configuration;
     private readonly IAzureSearchEmbedService _azureSearchEmbedService;
+    private readonly IStorageService _storageService;
 
     public UploaderDocumentService(
-        BlobContainerClient blobContainerClient,
         SearchIndexClient searchClient,
         BlobServiceClient blobServiceClient,
         ILogger<UploaderDocumentService> logger,
         IConfiguration configuration,
-        IAzureSearchEmbedService azureSearchEmbedService)
+        IAzureSearchEmbedService azureSearchEmbedService,
+        IStorageService storageService)
     {
-        _blobContainerClient = blobContainerClient;
         _searchClient = searchClient;
         _blobServiceClient = blobServiceClient;
         _logger = logger;
         _configuration = configuration;
         _azureSearchEmbedService = azureSearchEmbedService;
+        _storageService = storageService;
     }
 
     public async IAsyncEnumerable<DocumentResponse> GetDocuments(
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await foreach (var blob in _blobContainerClient.GetBlobsAsync(cancellationToken: cancellationToken))
+        var container = await _storageService.GetInputBlobContainerClient();
+        await foreach (var blob in container.GetBlobsAsync(cancellationToken: cancellationToken))
         {
             if (blob is not null and { Deleted: false })
             {
                 var props = blob.Properties;
-                var baseUri = _blobContainerClient.Uri;
+                var baseUri = container.Uri;
                 var builder = new UriBuilder(baseUri);
                 builder.Path += $"/{blob.Name}";
 
@@ -65,8 +66,6 @@ public class UploaderDocumentService : IUploaderDocumentService
                     builder.Uri,
                     documentProcessingStatus,
                     embeddingType);
-
-
             }
         }
     }
@@ -97,7 +96,8 @@ public class UploaderDocumentService : IUploaderDocumentService
 
     private async Task<Stream> GetBlobStreamAsync(DocumentResponse document)
     {
-        var blobClient = _blobContainerClient.GetBlobClient(document.Name);
+        var container = await _storageService.GetInputBlobContainerClient();
+        var blobClient = container.GetBlobClient(document.Name);
 
         if (await blobClient.ExistsAsync())
         {
