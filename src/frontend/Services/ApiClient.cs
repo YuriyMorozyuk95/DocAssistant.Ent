@@ -93,6 +93,19 @@ public sealed class ApiClient(HttpClient httpClient)
     // ReSharper disable once InconsistentNaming
     public Task<AnswerResult<ChatRequest>> ChatConversationAsync(ChatRequest request) => PostRequestAsync(request, "api/chat");
 
+    public async Task SynchronizeDocumentsAsync(string cookie)
+    {
+        using var content = new MultipartFormDataContent();
+
+        // set cookie
+        content.Headers.Add("X-CSRF-TOKEN-FORM", cookie);
+        content.Headers.Add("X-CSRF-TOKEN-HEADER", cookie);
+
+        var response = await httpClient.PostAsync("api/synchronize", content);
+
+        response.EnsureSuccessStatusCode();
+    }
+
     private async Task<AnswerResult<TRequest>> PostRequestAsync<TRequest>(
         TRequest request, string apiRoute) where TRequest : ApproachRequest
     {

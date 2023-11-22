@@ -20,6 +20,9 @@ internal static class WebApplicationExtensions
         // Get all documents
         api.MapGet("documents", OnGetDocumentsAsync);
 
+        // synchronize documents in with blob storage and index
+        api.MapPost("synchronize", OnPostSynchronizeAsync);
+
         api.MapGet("enableLogout", OnGetEnableLogout);
 
         return app;
@@ -106,50 +109,18 @@ internal static class WebApplicationExtensions
         return TypedResults.Ok(response);
     }
 
-    private static async IAsyncEnumerable<DocumentResponse> OnGetDocumentsAsync(
-        BlobContainerClient client,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
+    private static IAsyncEnumerable<DocumentResponse> OnGetDocumentsAsync(
+        [FromServices] IUploaderDocumentService service,
+        CancellationToken cancellationToken)
     {
-        await foreach (var blob in client.GetBlobsAsync(cancellationToken: cancellationToken))
-        {
-            if (blob is not null and { Deleted: false })
-            {
-                var props = blob.Properties;
-                var baseUri = client.Uri;
-                var builder = new UriBuilder(baseUri);
-                builder.Path += $"/{blob.Name}";
+        return service.GetDocuments(cancellationToken);
+    }
 
-                var metadata = blob.Metadata;
-                var documentProcessingStatus = GetMetadataEnumOrDefault(
-                    metadata,
-                    nameof(DocumentProcessingStatus),
-                    DocumentProcessingStatus.NotProcessed);
-
-                var embeddingType = GetMetadataEnumOrDefault(
-                    metadata,
-                    nameof(EmbeddingType),
-                    EmbeddingType.AzureSearch);
-
-                yield return new(
-                    blob.Name,
-                    props.ContentType,
-                    props.ContentLength ?? 0,
-                    props.LastModified,
-                    builder.Uri,
-                    documentProcessingStatus,
-                    embeddingType);
-
-                static TEnum GetMetadataEnumOrDefault<TEnum>(
-                    IDictionary<string, string> metadata,
-                    string key,
-                    TEnum @default) where TEnum : struct
-                {
-                    return metadata.TryGetValue(key, out var value)
-                           && Enum.TryParse<TEnum>(value, out var status)
-                        ? status
-                        : @default;
-                }
-            }
-        }
+    private static async Task<IResult> OnPostSynchronizeAsync(
+        [FromServices] IUploaderDocumentService service,
+        CancellationToken cancellationToken)
+    {
+        await service.UploadToAzureIndex(cancellationToken);
+        return TypedResults.Ok();
     }
 }

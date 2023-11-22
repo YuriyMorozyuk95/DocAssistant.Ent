@@ -12,7 +12,8 @@
                     </CardHeaderContent>
                     <CardHeaderActions>
                         <MudIconButton Icon="@Icons.Material.Filled.CloudUpload"
-                                       Size="Size.Large" Color="Color.Primary" />
+                                       Size="Size.Large" Color="Color.Primary" 
+                                       OnClick="@(async () => await SynchronizeDocumentsAsync())"/>
                     </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
