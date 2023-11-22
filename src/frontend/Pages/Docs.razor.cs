@@ -43,6 +43,7 @@ public sealed partial class Docs : IDisposable
 
     private async Task GetDocumentsAsync()
     {
+        _documents.Clear();
         _isLoadingDocuments = true;
 
         try
@@ -86,6 +87,7 @@ public sealed partial class Docs : IDisposable
                     });
 
                 await _fileUpload.ResetAsync();
+                await GetDocumentsAsync();
             }
             else
             {
@@ -123,5 +125,6 @@ public sealed partial class Docs : IDisposable
     {
         var cookie = await JsRuntime.InvokeAsync<string>("getCookie", "XSRF-TOKEN");
         await Client.SynchronizeDocumentsAsync(cookie);
+        await GetDocumentsAsync();
     }
 }
