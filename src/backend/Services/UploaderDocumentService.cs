@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using Azure;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
 
@@ -45,7 +46,10 @@ public class UploaderDocumentService : IUploaderDocumentService
                 var builder = new UriBuilder(baseUri);
                 builder.Path += $"/{blob.Name}";
 
-                var metadata = blob.Metadata;
+                BlobClient blobClient = container.GetBlobClient(blob.Name);  
+                Response<BlobProperties> response = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);  
+                IDictionary<string, string> metadata = response.Value.Metadata;
+
                 var documentProcessingStatus = GetMetadataEnumOrDefault(
                     metadata,
                     nameof(DocumentProcessingStatus),
