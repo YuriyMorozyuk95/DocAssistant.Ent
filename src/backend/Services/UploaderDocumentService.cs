@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using Azure;
+using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
 
 namespace MinimalApi.Services;
@@ -11,42 +13,43 @@ public interface IUploaderDocumentService
 }
 public class UploaderDocumentService : IUploaderDocumentService
 {
-    private readonly BlobContainerClient _blobContainerClient;
     private readonly SearchIndexClient _searchClient;
-    private readonly BlobServiceClient _blobServiceClient;
     private readonly ILogger<UploaderDocumentService> _logger;
     private readonly IConfiguration _configuration;
     private readonly IAzureSearchEmbedService _azureSearchEmbedService;
+    private readonly IStorageService _storageService;
 
     public UploaderDocumentService(
-        BlobContainerClient blobContainerClient,
         SearchIndexClient searchClient,
-        BlobServiceClient blobServiceClient,
         ILogger<UploaderDocumentService> logger,
         IConfiguration configuration,
-        IAzureSearchEmbedService azureSearchEmbedService)
+        IAzureSearchEmbedService azureSearchEmbedService,
+        IStorageService storageService)
     {
-        _blobContainerClient = blobContainerClient;
         _searchClient = searchClient;
-        _blobServiceClient = blobServiceClient;
         _logger = logger;
         _configuration = configuration;
         _azureSearchEmbedService = azureSearchEmbedService;
+        _storageService = storageService;
     }
 
     public async IAsyncEnumerable<DocumentResponse> GetDocuments(
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await foreach (var blob in _blobContainerClient.GetBlobsAsync(cancellationToken: cancellationToken))
+        var container = await _storageService.GetInputBlobContainerClient();
+        await foreach (var blob in container.GetBlobsAsync(cancellationToken: cancellationToken))
         {
             if (blob is not null and { Deleted: false })
             {
                 var props = blob.Properties;
-                var baseUri = _blobContainerClient.Uri;
+                var baseUri = container.Uri;
                 var builder = new UriBuilder(baseUri);
                 builder.Path += $"/{blob.Name}";
 
-                var metadata = blob.Metadata;
+                BlobClient blobClient = container.GetBlobClient(blob.Name);  
+                Response<BlobProperties> response = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);  
+                IDictionary<string, string> metadata = response.Value.Metadata;
+
                 var documentProcessingStatus = GetMetadataEnumOrDefault(
                     metadata,
                     nameof(DocumentProcessingStatus),
@@ -65,8 +68,6 @@ public class UploaderDocumentService : IUploaderDocumentService
                     builder.Uri,
                     documentProcessingStatus,
                     embeddingType);
-
-
             }
         }
     }
@@ -74,7 +75,7 @@ public class UploaderDocumentService : IUploaderDocumentService
     public async Task UploadToAzureIndex(CancellationToken cancellationToken)
     {
         var searchIndexName = _configuration["AzureSearchIndex"];
-        var embeddingModel = _configuration["AZURE_OPENAI_EMBEDDING_DEPLOYMENT"];
+        var embeddingModel = _configuration["AzureOpenAiEmbeddingDeployment"];
 
         var consoleAppOptions = new UploaderOptions();
         _configuration.GetSection("UploaderOptions").Bind(consoleAppOptions);
@@ -85,24 +86,63 @@ public class UploaderDocumentService : IUploaderDocumentService
         await _azureSearchEmbedService.RemoveSearchIndex(searchIndexName!);
         await _azureSearchEmbedService.CreateSearchIndex(searchIndexName!);
 
+        var inputContainer = await _storageService.GetInputBlobContainerClient();
+
         await foreach(var document in GetDocuments(cancellationToken))
         {
-            var stream = await GetBlobStreamAsync(document);
+            var fileName = document.Name;
+            var blobClient = inputContainer.GetBlobClient(document.Name);
 
-            await _azureSearchEmbedService.EmbedBlob(stream, document.Name, searchIndexName!, embeddingModel!);
+            var stream = await GetBlobStreamAsync(blobClient);
+            if (!stream.CanRead || !stream.CanSeek)  
+            {  
+                throw new NotSupportedException("The stream must be readable and seekable.");  
+            }
+            using var documents = PdfReader.Open(stream, PdfDocumentOpenMode.Import);
 
-            //TODO update document metdata
+            for (int i = 0; i < documents.PageCount; i++)
+            {
+                var chunkName = BlobNameFromFilePage(fileName, i);
+                var tempFileName = Path.GetTempFileName();
+
+                try
+                {
+                    using var pdfDocument = new PdfDocument();
+                    pdfDocument.AddPage(documents.Pages[i]);
+                    pdfDocument.Save(tempFileName);
+
+                    await using var tempStream = File.OpenRead(tempFileName);
+                    await _azureSearchEmbedService.EmbedBlob(tempStream, chunkName, searchIndexName!, embeddingModel!);
+
+                    //Add metadata
+                }
+                finally
+                {
+                    File.Delete(tempFileName);
+                }
+            }
+
+            //TODO add DocumentProcessingStatus.Failed in case of fail
+            BlobProperties properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);  
+            var metadata = properties.Metadata;
+
+            metadata[nameof(DocumentProcessingStatus)] = DocumentProcessingStatus.Succeeded.ToString();
+            metadata[nameof(EmbeddingType)] = EmbeddingType.AzureSearch.ToString();
+
+            await blobClient.SetMetadataAsync(metadata, cancellationToken: cancellationToken); 
         }
     }
 
-    private async Task<Stream> GetBlobStreamAsync(DocumentResponse document)
+    private async Task<Stream> GetBlobStreamAsync(BlobClient blobClient)
     {
-        var blobClient = _blobContainerClient.GetBlobClient(document.Name);
-
         if (await blobClient.ExistsAsync())
         {
             BlobDownloadInfo download = await blobClient.DownloadAsync();
-            return download.Content;
+
+            var memoryStream = new MemoryStream();  
+            await download.Content.CopyToAsync(memoryStream);  
+            memoryStream.Position = 0;  
+            return memoryStream; 
         }
         else
         {
@@ -120,6 +160,11 @@ public class UploaderDocumentService : IUploaderDocumentService
             ? status
             : @default;
     }
+
+    private static string BlobNameFromFilePage(string filename, int page = 0) =>
+        Path.GetExtension(filename).ToLower() is ".pdf"
+            ? $"{Path.GetFileNameWithoutExtension(filename)}-{page}.pdf"
+            : Path.GetFileName(filename);
 }
 
 public class UploaderOptions

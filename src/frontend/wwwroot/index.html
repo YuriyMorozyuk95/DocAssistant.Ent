@@ -55,15 +55,5 @@
     <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/languages/sql.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/languages/wasm.min.js" defer></script>
     <script src="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.js" defer></script>
-    <script>
-        window.hljsPlugInAdded = false;
-        window.highlight = () => {
-            if (!window.hljsPlugInAdded) {
-                hljs.addPlugin(new CopyButtonPlugin());
-                window.hljsPlugInAdded = true;
-            }
-            hljs.highlightAll();
-        };
-    </script>
 </body>
 </html>

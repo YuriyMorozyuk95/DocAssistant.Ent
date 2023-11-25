@@ -11,7 +11,7 @@ public sealed partial class VoiceChat : IDisposable
     private bool _isReadingResponse = false;
     private IDisposable? _recognitionSubscription;
     private VoicePreferences? _voicePreferences;
-    private readonly Dictionary<UserQuestion, string?> _questionAndAnswerMap = [];
+    private readonly Dictionary<UserQuestion, string?> _questionAndAnswerMap = new Dictionary<UserQuestion, string?>();
     private readonly MarkdownPipeline _pipeline = new MarkdownPipelineBuilder()
         .ConfigureNewLine("\n")
         .UseAdvancedExtensions()
@@ -19,7 +19,7 @@ public sealed partial class VoiceChat : IDisposable
         .UseSoftlineBreakAsHardlineBreak()
         .Build();
 
-    [Inject] public required OpenAIPromptQueue OpenAIPrompts { get; set; }
+    [Inject] public required OpenAIPromptQueue OpenAiPrompts { get; set; }
     [Inject] public required IDialogService Dialog { get; set; }
     [Inject] public required ISpeechRecognitionService SpeechRecognition { get; set; }
     [Inject] public required ISpeechSynthesisService SpeechSynthesis { get; set; }
@@ -38,6 +38,14 @@ public sealed partial class VoiceChat : IDisposable
         }
     }
 
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            JavaScript.InvokeVoid("highlight");
+        }
+    }
+
     private void OnSendPrompt()
     {
         if (_isReceivingResponse || string.IsNullOrWhiteSpace(_userQuestion))
@@ -49,7 +57,7 @@ public sealed partial class VoiceChat : IDisposable
         _currentQuestion = new(_userQuestion, DateTime.Now);
         _questionAndAnswerMap[_currentQuestion] = null;
 
-        OpenAIPrompts.Enqueue(
+        OpenAiPrompts.Enqueue(
             _userQuestion,
             async (PromptResponse response) => await InvokeAsync(() =>
             {
@@ -103,9 +111,6 @@ public sealed partial class VoiceChat : IDisposable
             OnSendPrompt();
         }
     }
-
-    protected override void OnAfterRender(bool firstRender) => JavaScript.InvokeVoid("highlight");
-
     private void StopTalking()
     {
         SpeechSynthesis.Cancel();

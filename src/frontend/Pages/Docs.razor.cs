@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using Microsoft.JSInterop;
+
 namespace ClientApp.Pages;
 
 public sealed partial class Docs : IDisposable
@@ -10,6 +12,7 @@ public sealed partial class Docs : IDisposable
     private MudFileUpload<IReadOnlyList<IBrowserFile>> _fileUpload = null!;
     private Task _getDocumentsTask = null!;
     private bool _isLoadingDocuments = false;
+    private bool _isIndexUploading = false;
     private string _filter = "";
 
     // Store a cancelation token that will be used to cancel if the user disposes of this component.
@@ -33,13 +36,16 @@ public sealed partial class Docs : IDisposable
 
     private bool FilesSelected => _fileUpload is { Files.Count: > 0 };
 
-    protected override void OnInitialized() =>
+    protected override void OnInitialized()
+    {
         // Instead of awaiting this async enumerable here, let's capture it in a task
         // and start it in the background. This way, we can await it in the UI.
         _getDocumentsTask = GetDocumentsAsync();
+    }
+
 
     private bool OnFilter(DocumentResponse document) => document is not null
-        && (string.IsNullOrWhiteSpace(_filter) || document.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase));
+                                                        && (string.IsNullOrWhiteSpace(_filter) || document.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase));
 
     private async Task GetDocumentsAsync()
     {
@@ -47,6 +53,7 @@ public sealed partial class Docs : IDisposable
 
         try
         {
+            _documents.Clear();
             var documents =
                 await Client.GetDocumentsAsync(_cancellationTokenSource.Token)
                     .ToListAsync();
@@ -86,6 +93,7 @@ public sealed partial class Docs : IDisposable
                     });
 
                 await _fileUpload.ResetAsync();
+                await GetDocumentsAsync();
             }
             else
             {
@@ -121,7 +129,17 @@ public sealed partial class Docs : IDisposable
 
     private async Task SynchronizeDocumentsAsync()
     {
-        var cookie = await JsRuntime.InvokeAsync<string>("getCookie", "XSRF-TOKEN");
-        await Client.SynchronizeDocumentsAsync(cookie);
+        _isIndexUploading = true;
+        try
+        {
+            var cookie = await JsRuntime.InvokeAsync<string>("getCookie", "XSRF-TOKEN");
+            await Client.SynchronizeDocumentsAsync(cookie);
+            await GetDocumentsAsync();
+        }
+        finally
+        {
+            _isIndexUploading = false;
+            StateHasChanged();
+        }
     }
 }

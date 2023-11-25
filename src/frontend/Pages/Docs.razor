@@ -11,9 +11,17 @@
                         <MudText Typo="Typo.h5">Upload Documents</MudText>
                     </CardHeaderContent>
                     <CardHeaderActions>
-                        <MudIconButton Icon="@Icons.Material.Filled.CloudUpload"
-                                       Size="Size.Large" Color="Color.Primary" 
-                                       OnClick="@(async () => await SynchronizeDocumentsAsync())"/>
+                        @* <MudIconButton Icon="@Icons.Material.Filled.CloudUpload"
+                        Size="Size.Large" Color="Color.Primary"
+                        OnClick="@(async () => await SynchronizeDocumentsAsync())" /> *@
+                        <MudButton HtmlTag="label"
+                                   Variant="Variant.Filled"
+                                   StartIcon="@Icons.Material.Filled.CloudUpload"
+                                   Size="Size.Large"
+                                   OnClick="@(async () => await SynchronizeDocumentsAsync())">
+                            Synchronizing Index Documents
+                        </MudButton>
+
                     </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
@@ -62,7 +70,7 @@
                                                 <MudListItem IconColor="Color.Error" @key="@file"
                                                              Icon="@Icons.Material.Filled.PictureAsPdf">
                                                     @file.Name <MudChip Size="Size.Small">@file.Size.ToHumanReadableSize()</MudChip>
-                                                </MudListItem>
+                                                    </MudListItem>
                                             }
                                         </MudList>
                                     </ChildContent>
@@ -96,7 +104,15 @@
         <MudTable Items="@_documents" Dense="true" Hover="true" Bordered="true"
                   FixedHeader="true" Filter="OnFilter" Elevation="4">
             <ToolBarContent>
-                @if (_isLoadingDocuments)
+                @if (_isIndexUploading)
+                {
+                    <MudText Typo="Typo.h5">
+                        Synchronizing Index Documents
+                    </MudText>
+                    <MudProgressCircular Indeterminate="true"
+                                         Size="Size.Small" Class="ml-2" />
+                }
+                else if (_isLoadingDocuments)
                 {
                     <MudText Typo="Typo.h5">
                         Loading Documents
@@ -148,20 +164,20 @@
                             Size="Size.Small" OnClick="@(() => OnShowDocument(context))" />
                 </MudTd>
                 <MudTd DataLabel="Status" Style="text-align:center">
-                @{
-                    switch (context.Status)
-                    {
-                        case DocumentProcessingStatus.Failed:
-                            <MudIcon Color="Color.Error" Icon="@Icons.Material.Filled.Close" />
-                            break;
-                        case DocumentProcessingStatus.Succeeded:
-                            <MudIcon Color="Color.Success" Icon="@Icons.Material.Filled.Check" />
-                            break;
-                        default:
-                            <MudIcon Color="Color.Warning" Icon="@Icons.Material.Filled.QuestionMark" />
-                            break;
+                    @{
+                        switch (context.Status)
+                        {
+                            case DocumentProcessingStatus.Failed:
+                                <MudIcon Color="Color.Error" Icon="@Icons.Material.Filled.Close" />
+                                break;
+                            case DocumentProcessingStatus.Succeeded:
+                                <MudIcon Color="Color.Success" Icon="@Icons.Material.Filled.Check" />
+                                break;
+                            default:
+                                <MudIcon Color="Color.Warning" Icon="@Icons.Material.Filled.QuestionMark" />
+                                break;
+                        }
                     }
-                }
                 </MudTd>
                 <MudTd DataLabel="Name">
                     <strong>@context.Name</strong>

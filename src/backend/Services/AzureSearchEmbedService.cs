@@ -32,22 +32,22 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
     private readonly SearchClient _indexSectionClient;
     private readonly SearchIndexClient _searchIndexClient;
     private readonly DocumentAnalysisClient _documentAnalysisClient;
-    private readonly BlobContainerClient _corpusContainerClient;
     private readonly ILogger<AzureSearchAzureSearchEmbedService>? _logger;
+    private readonly IStorageService _storageService;
 
     public AzureSearchAzureSearchEmbedService(OpenAIClient openAiClient,
         SearchClient indexSectionClient,
         SearchIndexClient searchIndexClient,
         DocumentAnalysisClient documentAnalysisClient,
-        BlobContainerClient corpusContainerClient,
-        ILogger<AzureSearchAzureSearchEmbedService>? logger)
+        ILogger<AzureSearchAzureSearchEmbedService>? logger,
+        IStorageService storageService)
     {
         _openAiClient = openAiClient;
         _indexSectionClient = indexSectionClient;
         _searchIndexClient = searchIndexClient;
         _documentAnalysisClient = documentAnalysisClient;
-        _corpusContainerClient = corpusContainerClient;
         _logger = logger;
+        _storageService = storageService;
     }
 
     [GeneratedRegex("[^0-9a-zA-Z_-]")]
@@ -268,7 +268,8 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
 
     private async Task UploadCorpusAsync(string corpusBlobName, string text)
     {
-        var blobClient = _corpusContainerClient.GetBlobClient(corpusBlobName);
+        var container = await _storageService.GetOutputBlobContainerClient();
+        var blobClient = container.GetBlobClient(corpusBlobName);
         if (await blobClient.ExistsAsync())
         {
             return;
