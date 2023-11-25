@@ -43,14 +43,6 @@ public sealed partial class Docs : IDisposable
         _getDocumentsTask = GetDocumentsAsync();
     }
 
-    //protected override async Task OnAfterRenderAsync(bool firstRender)
-    //{
-    //    if (firstRender)
-    //    {
-    //        IsBusy = await GetBusyStateAsync();
-    //        StateHasChanged();
-    //    }
-    //}
 
     private bool OnFilter(DocumentResponse document) => document is not null
                                                         && (string.IsNullOrWhiteSpace(_filter) || document.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase));
@@ -149,15 +141,5 @@ public sealed partial class Docs : IDisposable
             _isIndexUploading = false;
             StateHasChanged();
         }
-    }
-
-    private async Task SetBusyStateAsync(bool isBusy)
-    {
-        await JsRuntime.InvokeVoidAsync("localStorage.setItem", "IsBusy", isBusy);
-    }
-
-    private async Task<bool> GetBusyStateAsync()
-    {
-        return await JsRuntime.InvokeAsync<bool>("localStorage.getItem", "IsBusy");
     }
 }
