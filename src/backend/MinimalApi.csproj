@@ -12,6 +12,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Prompts\create-answer.txt" />
+    <None Remove="Prompts\create-json-prompt.txt" />
+    <None Remove="Prompts\search-prompt.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Prompts\create-json-prompt.txt" />
+    <Content Include="Prompts\create-answer.txt" />
+    <Content Include="Prompts\search-prompt.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Azure.AI.FormRecognizer" />
     <PackageReference Include="Azure.AI.OpenAI" />
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />

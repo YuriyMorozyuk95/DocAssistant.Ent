@@ -1,5 +1,9 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using ClientApp.Components;
+
+using Microsoft.Identity.Client;
+
 namespace MinimalApi.Services;
 
 public class ReadRetrieveReadChatService
@@ -7,11 +11,13 @@ public class ReadRetrieveReadChatService
     private readonly SearchClient _searchClient;
     private readonly IKernel _kernel;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<ReadRetrieveReadChatService> _logger;
 
     public ReadRetrieveReadChatService(
         SearchClient searchClient,
         OpenAIClient client,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILogger<ReadRetrieveReadChatService> logger)
     {
         _searchClient = searchClient;
 
@@ -36,6 +42,7 @@ public class ReadRetrieveReadChatService
 
         _kernel = kernelBuilder.Build();
         _configuration = configuration;
+        _logger = logger;
     }
 
     // This method generates a reply to a given chat history.  
@@ -70,7 +77,7 @@ public class ReadRetrieveReadChatService
         // use query to search related docs
         // Use the search query to search related documents
         var documentContentList = await GetQueryDocuments(overrides, cancellationToken, query, embeddings);
-        string documentContents = GetDocumentContents(overrides, cancellationToken, query, embeddings, documentContentList);
+        string documentContents = GetDocumentContents(documentContentList);
 
         // step 3
         // put together related docs and conversation history to generate answer
@@ -147,11 +154,12 @@ e.g.
         return (ans, thoughts);
     }
 
-    private static ChatHistory CreateAnswerChat(ChatTurn[] history, IChatCompletion chat, string documentContents)
+    private ChatHistory CreateAnswerChat(ChatTurn[] history, IChatCompletion chat, string documentContents)
     {
-        var answerChat = chat.CreateNewChat(
-            "You are a system assistant who helps the company employees with their healthcare " +
-            "plan questions, and questions about the employee handbook. Be brief in your answers");
+        var createAnswerPrompt = GetPromptsFromFile("create-answer.txt");
+        _logger.LogInformation("create-answer: {x}", createAnswerPrompt);
+
+        var answerChat = chat.CreateNewChat(createAnswerPrompt);
 
         // add chat history
         foreach (var turn in history)
@@ -160,32 +168,30 @@ e.g.
             if (turn.Bot is { } botMessage)
             {
                 answerChat.AddAssistantMessage(botMessage);
+                _logger.LogInformation("history: {x}", botMessage);
             }
         }
 
+
+        var createJsonPrompt = GetPromptsFromFile("create-json-prompt.txt", new Dictionary<string, string>
+        {
+            { "{documentContents}", documentContents }
+        });
+        _logger.LogInformation("create-json-prompt: {x}", createJsonPrompt);
         // format prompt
         // Add the document contents and the answer format to the chat  
-        answerChat.AddUserMessage(@$" ## Source ##
-{documentContents}
-## End ##
-
-You answer needs to be a json object with the following format.
-{{
-    ""answer"": // the answer to the question, add a source reference to the end of each sentence. e.g. Apple is a fruit [reference1.pdf][reference2.pdf]. If no source available, put the answer as I don't know.
-    ""thoughts"": // brief thoughts on how you came up with the answer, e.g. what sources you used, what you thought about, etc.
-}}");
+        answerChat.AddUserMessage(createJsonPrompt);
         return answerChat;
     }
 
-    private string GetDocumentContents(RequestOverrides? overrides, CancellationToken cancellationToken, string? query, float[]? embeddings, SupportingContentRecord[] documentContentList)
+    private string GetDocumentContents(SupportingContentRecord[] documentContentList)
     {
-        string documentContents = string.Empty;
-
-        // Join document contents or set as "no source available" if no documents found  
-        documentContents = documentContentList.Length == 0 ? "no source available." : string.Join("\r", documentContentList.Select(x => $"{x.Title}:{x.Content}"));
+        string documentContents =
+            // Join document contents or set as "no source available" if no documents found  
+            documentContentList.Length == 0 ? "no source available." : string.Join("\r", documentContentList.Select(x => $"{x.Title}:{x.Content}"));
 
         // Print document contents to the console  
-        Console.WriteLine(documentContents);
+        _logger.LogInformation(documentContents);
         return documentContents;
     }
 
@@ -194,24 +200,22 @@ You answer needs to be a json object with the following format.
         return _searchClient.QueryDocumentsAsync(query, embeddings, overrides, cancellationToken);
     }
 
-    private static async Task<string?> GenerateQueryAsync(RequestOverrides? overrides, CancellationToken cancellationToken, IChatCompletion chat, string question)
+    private async Task<string?> GenerateQueryAsync(RequestOverrides? overrides, CancellationToken cancellationToken, IChatCompletion chat, string question)
     {
         string? query = null;
         if (overrides?.RetrievalMode != "Vector")
         {
+            var searchPrompt = GetPromptsFromFile("search-prompt.txt");
             // Create a new chat to generate the search query  
-            var getQueryChat = chat.CreateNewChat(@"You are a helpful AI assistant, generate search query for followup question.
-Make your respond simple and precise. Return the query only, do not return any other text.
-e.g.
-Northwind Health Plus AND standard plan.
-standard plan AND dental AND employee benefit.
-");
+            var getQueryChat = chat.CreateNewChat(searchPrompt);
 
             // Add the user question to the chat 
             getQueryChat.AddUserMessage(question);
             var result = await chat.GetChatCompletionsAsync(
                 getQueryChat,
                 cancellationToken: cancellationToken);
+            _logger.LogInformation("searchPrompt: {x}", searchPrompt);
+            _logger.LogInformation("question: {x}", question);
 
             // If no result is returned, throw an exception 
             if (result.Count != 1)
@@ -221,6 +225,7 @@ standard plan AND dental AND employee benefit.
 
             // Extract the search query from the result  
             query = result[0].ModelResult.GetOpenAIChatResult().Choice.Message.Content;
+            _logger.LogInformation("Query: {x}", query);
         }
 
         return query;
@@ -243,5 +248,26 @@ standard plan AND dental AND employee benefit.
             ? userQuestion
             : throw new InvalidOperationException("Use question is null");
         return question;
+    }
+
+    //TODO to separate file
+    private string GetPromptsFromFile(string file)
+    {
+        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Prompts", file);
+        var prompt = File.ReadAllText(path);
+        return prompt;
+    }
+
+    private string GetPromptsFromFile(string file, IDictionary<string, string> keyValue)
+    {
+        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Prompts", file);
+        var prompt = File.ReadAllText(path);
+
+        foreach(var (key, value) in keyValue)
+        {
+            prompt = prompt.Replace(key, value);
+        }
+        
+        return prompt;
     }
 }
