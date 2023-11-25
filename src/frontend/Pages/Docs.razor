@@ -11,9 +11,16 @@
                         <MudText Typo="Typo.h5">Upload Documents</MudText>
                     </CardHeaderContent>
                     <CardHeaderActions>
-                            <MudIconButton Icon="@Icons.Material.Filled.CloudUpload"
-                                           Size="Size.Large" Color="Color.Primary"
-                                           OnClick="@(async () => await SynchronizeDocumentsAsync())" />
+                        @* <MudIconButton Icon="@Icons.Material.Filled.CloudUpload"
+                        Size="Size.Large" Color="Color.Primary"
+                        OnClick="@(async () => await SynchronizeDocumentsAsync())" /> *@
+                        <MudButton HtmlTag="label"
+                                   Variant="Variant.Filled"
+                                   StartIcon="@Icons.Material.Filled.CloudUpload"
+                                   Size="Size.Large"
+                                   OnClick="@(async () => await SynchronizeDocumentsAsync())">
+                            Synchronizing Index Documents
+                        </MudButton>
 
                     </CardHeaderActions>
                 </MudCardHeader>
@@ -105,25 +112,20 @@
                     <MudProgressCircular Indeterminate="true"
                                          Size="Size.Small" Class="ml-2" />
                 }
+                else if (_isLoadingDocuments)
+                {
+                    <MudText Typo="Typo.h5">
+                        Loading Documents
+                    </MudText>
+                    <MudProgressCircular Indeterminate="true"
+                                         Size="Size.Small" Class="ml-2" />
+                }
                 else
                 {
-                    <MudSpacer />
-                    @if (_isLoadingDocuments)
-                    {
-                        <MudText Typo="Typo.h5">
-                            Loading Documents
-                        </MudText>
-                        <MudProgressCircular Indeterminate="true"
-                                             Size="Size.Small" Class="ml-2" />
-                    }
-                    else
-                    {
-                        <MudText Typo="Typo.h5">
-                            Existing Documents
-                        </MudText>
-                    }
+                    <MudText Typo="Typo.h5">
+                        Existing Documents
+                    </MudText>
                 }
-                
                 <MudSpacer />
                 <MudTextField @bind-Value="@_filter" Placeholder="Filter" Adornment="Adornment.Start"
                               AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"
