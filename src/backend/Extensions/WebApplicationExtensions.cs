@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using ClientApp.Services;
 namespace MinimalApi.Extensions;
 
 internal static class WebApplicationExtensions
@@ -7,9 +8,6 @@ internal static class WebApplicationExtensions
     internal static WebApplication MapApi(this WebApplication app)
     {
         var api = app.MapGroup("api");
-
-        // Blazor 📎 Clippy streaming endpoint
-        api.MapPost("openai/chat", OnPostChatPromptAsync);
 
         // Long-form chat w/ contextual history endpoint
         api.MapPost("chat", OnPostChatAsync);
@@ -25,7 +23,45 @@ internal static class WebApplicationExtensions
 
         api.MapGet("enableLogout", OnGetEnableLogout);
 
+        api.MapGet("copilot-prompts", OnGetCopilotPrompts);  
+  
+        api.MapPost("copilot-prompts", OnPostCopilotPromptsAsync);  
+
+
         return app;
+    }
+
+    private static async Task<IResult> OnPostCopilotPromptsAsync(HttpContext context, [FromServices] ILogger<AzureBlobStorageService> logger)
+    {
+        logger.LogInformation("Write prompt files");
+
+        var updatedData = await context.Request.ReadFromJsonAsync<CopilotPromptsRequestResponse>();
+        if (updatedData != null)
+        {
+            PromptFileService.UpdatePromptsToFile("create-answer.txt", updatedData.CreateAnswer);
+            PromptFileService.UpdatePromptsToFile("create-json-prompt.txt", updatedData.CreateJsonPrompt);
+            PromptFileService.UpdatePromptsToFile("search-prompt.txt", updatedData.SearchPrompt);
+            PromptFileService.UpdatePromptsToFile("system-follow-up.txt", updatedData.SystemFollowUp);
+            PromptFileService.UpdatePromptsToFile("system-follow-up-content.txt", updatedData.SystemFollowUpContent);
+        }
+
+        return TypedResults.Ok();
+    }
+
+    private static CopilotPromptsRequestResponse OnGetCopilotPrompts([FromServices] ILogger<AzureBlobStorageService> logger)
+    {
+        logger.LogInformation("Load file contents documents");
+
+        var response = new CopilotPromptsRequestResponse
+        {
+            CreateAnswer = PromptFileService.ReadPromptsFromFile("create-answer.txt"),
+            CreateJsonPrompt = PromptFileService.ReadPromptsFromFile("create-json-prompt.txt"),
+            SearchPrompt = PromptFileService.ReadPromptsFromFile("search-prompt.txt"),
+            SystemFollowUp = PromptFileService.ReadPromptsFromFile("system-follow-up.txt"),
+            SystemFollowUpContent = PromptFileService.ReadPromptsFromFile("system-follow-up-content.txt"),
+        };
+
+        return response;
     }
 
     private static IResult OnGetEnableLogout(HttpContext context)
@@ -34,48 +70,6 @@ internal static class WebApplicationExtensions
         var enableLogout = !string.IsNullOrEmpty(header);
 
         return TypedResults.Ok(enableLogout);
-    }
-
-    private static async IAsyncEnumerable<ChatChunkResponse> OnPostChatPromptAsync(
-        PromptRequest prompt,
-        OpenAIClient client,
-        IConfiguration config,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        var deploymentId = config["AZURE_OPENAI_CHATGPT_DEPLOYMENT"];
-        var response = await client.GetChatCompletionsStreamingAsync(
-            deploymentId, new ChatCompletionsOptions
-            {
-                Messages =
-                {
-                    new ChatMessage(ChatRole.System, """
-                        You're an AI assistant for developers, helping them write code more efficiently.
-                        You're name is **Blazor 📎 Clippy** and you're an expert Blazor developer.
-                        You're also an expert in ASP.NET Core, C#, TypeScript, and even JavaScript.
-                        You will always reply with a Markdown formatted response.
-                        """),
-
-                    new ChatMessage(ChatRole.User, "What's your name?"),
-
-                    new ChatMessage(ChatRole.Assistant,
-                        "Hi, my name is **Blazor 📎 Clippy**! Nice to meet you."),
-
-                    new ChatMessage(ChatRole.User, prompt.Prompt)
-                }
-            }, cancellationToken);
-
-        using var completions = response.Value;
-        await foreach (var choice in completions.GetChoicesStreaming(cancellationToken))
-        {
-            await foreach (var message in choice.GetMessageStreaming(cancellationToken))
-            {
-                if (message is { Content.Length: > 0 })
-                {
-                    var (length, content) = (message.Content.Length, message.Content);
-                    yield return new ChatChunkResponse(length, content);
-                }
-            }
-        }
     }
 
     private static async Task<IResult> OnPostChatAsync(

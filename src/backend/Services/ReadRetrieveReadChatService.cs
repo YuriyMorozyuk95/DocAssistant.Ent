@@ -108,19 +108,18 @@ public class ReadRetrieveReadChatService
     {
         var answerWithFollowUpQuestion = new string(answer);
 
-        var followUpQuestionChat = chat.CreateNewChat(@"You are a helpful AI assistant");
-        followUpQuestionChat.AddUserMessage($@"Generate three follow-up question based on the answer you just generated.
-# Answer
-{answer}
+        var systemFollowUp = PromptFileService.ReadPromptsFromFile("system-follow-up.txt");
+        var systemFollowContent = PromptFileService.ReadPromptsFromFile("system-follow-up.txt",new Dictionary<string, string>
+        {
+            { "{answer}", answer }
+        });
 
-# Format of the response
-Return the follow-up question as a json string list.
-e.g.
-[
-    ""What is the deductible?"",
-    ""What is the co-pay?"",
-    ""What is the out-of-pocket maximum?""
-]");
+        var followUpQuestionChat = chat.CreateNewChat(systemFollowUp);
+        _logger.LogInformation("system-follow-up: {x}", systemFollowUp);
+
+        followUpQuestionChat.AddUserMessage(systemFollowContent);
+        _logger.LogInformation("system-follow-up-content: {x}", systemFollowContent);
+
 
         // Get chat completions to generate the follow-up questions  
         var followUpQuestions = await chat.GetChatCompletionsAsync(
@@ -129,6 +128,8 @@ e.g.
 
         // Extract the follow-up questions from the result and add them to the answer  
         var followUpQuestionsJson = followUpQuestions[0].ModelResult.GetOpenAIChatResult().Choice.Message.Content;
+        _logger.LogInformation("followUpQuestionsJson: {x}", followUpQuestionsJson);
+
         var followUpQuestionsObject = JsonSerializer.Deserialize<JsonElement>(followUpQuestionsJson);
         var followUpQuestionsList = followUpQuestionsObject.EnumerateArray().Select(x => x.GetString()).ToList();
         foreach (var followUpQuestion in followUpQuestionsList)
@@ -156,7 +157,7 @@ e.g.
 
     private ChatHistory CreateAnswerChat(ChatTurn[] history, IChatCompletion chat, string documentContents)
     {
-        var createAnswerPrompt = GetPromptsFromFile("create-answer.txt");
+        var createAnswerPrompt = PromptFileService.ReadPromptsFromFile("create-answer.txt");
         _logger.LogInformation("create-answer: {x}", createAnswerPrompt);
 
         var answerChat = chat.CreateNewChat(createAnswerPrompt);
@@ -173,7 +174,7 @@ e.g.
         }
 
 
-        var createJsonPrompt = GetPromptsFromFile("create-json-prompt.txt", new Dictionary<string, string>
+        var createJsonPrompt = PromptFileService.ReadPromptsFromFile("create-json-prompt.txt", new Dictionary<string, string>
         {
             { "{documentContents}", documentContents }
         });
@@ -205,7 +206,7 @@ e.g.
         string? query = null;
         if (overrides?.RetrievalMode != "Vector")
         {
-            var searchPrompt = GetPromptsFromFile("search-prompt.txt");
+            var searchPrompt = PromptFileService.ReadPromptsFromFile("search-prompt.txt");
             // Create a new chat to generate the search query  
             var getQueryChat = chat.CreateNewChat(searchPrompt);
 
@@ -248,26 +249,5 @@ e.g.
             ? userQuestion
             : throw new InvalidOperationException("Use question is null");
         return question;
-    }
-
-    //TODO to separate file
-    private string GetPromptsFromFile(string file)
-    {
-        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Prompts", file);
-        var prompt = File.ReadAllText(path);
-        return prompt;
-    }
-
-    private string GetPromptsFromFile(string file, IDictionary<string, string> keyValue)
-    {
-        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Prompts", file);
-        var prompt = File.ReadAllText(path);
-
-        foreach(var (key, value) in keyValue)
-        {
-            prompt = prompt.Replace(key, value);
-        }
-        
-        return prompt;
     }
 }
