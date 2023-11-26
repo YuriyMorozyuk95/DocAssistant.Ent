@@ -148,4 +148,19 @@ public sealed class ApiClient(HttpClient httpClient)
             };
         }
     }
+
+    public async Task<CopilotPromptsRequestResponse> GetCopilotPromptsAsync()  
+    {  
+        var response = await httpClient.GetAsync("api/copilot-prompts");  
+        response.EnsureSuccessStatusCode();  
+        return (await response.Content.ReadFromJsonAsync<CopilotPromptsRequestResponse>())!;  
+    }  
+  
+    public async Task PostCopilotPromptsServerDataAsync(CopilotPromptsRequestResponse updatedData)  
+    {  
+        var response = await httpClient.PostAsJsonAsync("api/copilot-prompts", updatedData);  
+        response.EnsureSuccessStatusCode();  
+    } 
 }
+
+//TODO move and rename

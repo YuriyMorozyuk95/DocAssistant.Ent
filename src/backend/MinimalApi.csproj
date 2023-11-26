@@ -12,6 +12,32 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Prompts\create-answer.txt" />
+    <None Remove="Prompts\create-json-prompt.txt" />
+    <None Remove="Prompts\search-prompt.txt" />
+    <None Remove="Prompts\system-follow-up-content.txt" />
+    <None Remove="Prompts\system-follow-up.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Prompts\system-follow-up-content.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Prompts\system-follow-up.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Prompts\create-json-prompt.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Prompts\create-answer.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Prompts\search-prompt.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Azure.AI.FormRecognizer" />
     <PackageReference Include="Azure.AI.OpenAI" />
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />

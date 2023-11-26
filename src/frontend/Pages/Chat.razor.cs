@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using System.Threading;
+
 namespace ClientApp.Pages;
 
 public sealed partial class Chat
@@ -9,7 +11,9 @@ public sealed partial class Chat
     private string _lastReferenceQuestion = "";
     private bool _isReceivingResponse = false;
 
-    private readonly Dictionary<UserQuestion, ApproachResponse?> _questionAndAnswerMap = [];
+    private readonly Dictionary<UserQuestion, ApproachResponse> _questionAndAnswerMap = new();
+    private bool _isLoadingPrompts;
+    private Task _getCopilotPrompts;
 
     [Inject] public required ISessionStorageService SessionStorage { get; set; }
 
@@ -18,8 +22,18 @@ public sealed partial class Chat
     [CascadingParameter(Name = nameof(Settings))]
     public required RequestSettingsOverrides Settings { get; set; }
 
+    [CascadingParameter(Name = nameof(CopilotPrompts))]
+    public required CopilotPromptsRequestResponse CopilotPrompts { get; set; } = new CopilotPromptsRequestResponse();  
+
     [CascadingParameter(Name = nameof(IsReversed))]
     public required bool IsReversed { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // Instead of awaiting this async enumerable here, let's capture it in a task
+        // and start it in the background. This way, we can await it in the UI.
+        _getCopilotPrompts = OnGetCopilotPromptsClickedAsync();
+    }
 
     private Task OnAskQuestionAsync(string question)
     {
@@ -48,7 +62,7 @@ public sealed partial class Chat
 
             history.Add(new ChatTurn(_userQuestion));
 
-            var request = new ChatRequest([.. history], Settings.Approach, Settings.Overrides);
+            var request = new ChatRequest(history.ToArray(), Settings.Approach, Settings.Overrides);
             var result = await ApiClient.ChatConversationAsync(request);
 
             _questionAndAnswerMap[_currentQuestion] = result.Response;
@@ -69,5 +83,26 @@ public sealed partial class Chat
         _userQuestion = _lastReferenceQuestion = "";
         _currentQuestion = default;
         _questionAndAnswerMap.Clear();
+    }
+
+    private async Task OnPostCopilotPromptsClickedAsync()
+    {
+        await ApiClient.PostCopilotPromptsServerDataAsync(CopilotPrompts);
+    }
+
+    private async Task OnGetCopilotPromptsClickedAsync()
+    {
+        _isLoadingPrompts = true;
+
+        try
+        {
+            CopilotPrompts = await ApiClient.GetCopilotPromptsAsync();
+        }
+        finally
+        {
+            _isLoadingPrompts = false;
+            StateHasChanged();
+        }
+
     }
 }
