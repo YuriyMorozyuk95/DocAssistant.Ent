@@ -11,6 +11,8 @@ public sealed partial class Chat
     private string _lastReferenceQuestion = "";
     private bool _isReceivingResponse = false;
 
+    private string _firstExample = "yo";
+
     private readonly Dictionary<UserQuestion, ApproachResponse> _questionAndAnswerMap = new();
     private bool _isLoadingPrompts;
     private Task _getCopilotPrompts;
