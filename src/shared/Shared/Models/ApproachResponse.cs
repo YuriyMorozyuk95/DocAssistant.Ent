@@ -8,4 +8,5 @@ public record ApproachResponse(
     string? Thoughts,
     SupportingContentRecord[] DataPoints, // title, content
     string CitationBaseUrl,
+    string?[] Questions,
     string? Error = null);

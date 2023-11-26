@@ -88,12 +88,13 @@ public class ReadRetrieveReadChatService
         // Get chat completions to generate the answer  
         (string answer, string thoughts) = await GetAnswerAsync(cancellationToken, chat, answerChat);
 
+        string?[] questions = { };
         // step 4
         // add follow up questions if requested
         // If follow-up questions are requested, generate them  
         if (overrides?.SuggestFollowupQuestions is true)
         {
-            answer = await UpdateAnswerWithFollowUpQuestionsAsync(cancellationToken, chat, answer);
+            (answer, questions) = await UpdateAnswerWithFollowUpQuestionsAsync(cancellationToken, chat, answer);
         }
 
         // Return the response  
@@ -101,15 +102,16 @@ public class ReadRetrieveReadChatService
             DataPoints: documentContentList,
             Answer: answer,
             Thoughts: thoughts,
-            CitationBaseUrl: _configuration.ToCitationBaseUrl());
+            CitationBaseUrl: _configuration.ToCitationBaseUrl(),
+            Questions: questions);
     }
 
-    private async Task<string> UpdateAnswerWithFollowUpQuestionsAsync(CancellationToken cancellationToken, IChatCompletion chat, string answer)
+    private async Task<(string answer, string?[] questions)> UpdateAnswerWithFollowUpQuestionsAsync(CancellationToken cancellationToken, IChatCompletion chat, string answer)
     {
         var answerWithFollowUpQuestion = new string(answer);
 
         var systemFollowUp = PromptFileService.ReadPromptsFromFile("system-follow-up.txt");
-        var systemFollowContent = PromptFileService.ReadPromptsFromFile("system-follow-up.txt",new Dictionary<string, string>
+        var systemFollowContent = PromptFileService.ReadPromptsFromFile("system-follow-up-content.txt",new Dictionary<string, string>
         {
             { "{answer}", answer }
         });
@@ -137,7 +139,7 @@ public class ReadRetrieveReadChatService
             answerWithFollowUpQuestion += $" <<{followUpQuestion}>> ";
         }
 
-        return answerWithFollowUpQuestion;
+        return (answer: answerWithFollowUpQuestion, questions: followUpQuestionsList.ToArray());
     }
 
     private async Task<(string answer, string thoughts)> GetAnswerAsync(CancellationToken cancellationToken, IChatCompletion chat, ChatHistory answerChat)
@@ -172,7 +174,6 @@ public class ReadRetrieveReadChatService
                 _logger.LogInformation("history: {x}", botMessage);
             }
         }
-
 
         var createJsonPrompt = PromptFileService.ReadPromptsFromFile("create-json-prompt.txt", new Dictionary<string, string>
         {

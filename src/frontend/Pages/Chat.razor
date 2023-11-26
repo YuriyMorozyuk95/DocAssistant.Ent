@@ -8,9 +8,20 @@
     <MudItem id="answers" xs="12" Class="overflow-x-auto">
         @if (_questionAndAnswerMap is { Count: 0 })
         {
-            <div class="d-flex align-content-center flex-wrap flex-grow-1 full-height">
-                <Examples Message="Chat with your data" OnExampleClicked="@OnAskQuestionAsync" />
-            </div>
+            @if (_isExamplesPromptsInit)
+            {
+                <MudText Typo="Typo.h5">
+                    Loading examples...
+                </MudText>
+                <MudProgressCircular Indeterminate="true"
+                                     Size="Size.Small" Class="ml-2" />
+            }
+            else
+            {
+                <div class="d-flex align-content-center flex-wrap flex-grow-1 full-height">
+                    <Examples @bind-FirstExample="_firstExample" @bind-SecondExample="_secondExample" @bind-ThirdExample="_thirdExample" OnExampleClicked="@OnAskQuestionAsync" />
+                </div>
+            }
         }
         else
         {
