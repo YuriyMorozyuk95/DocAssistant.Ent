@@ -11,9 +11,9 @@ public sealed partial class Chat
     private string _lastReferenceQuestion = "";
     private bool _isReceivingResponse = false;
 
-    private string? _firstExample = "yo";
-    private string? _secondExample = "hi";
-    private string? _thirdExample = "hi";
+    private string? _firstExample = "Loading...";
+    private string? _secondExample = "Loading...";
+    private string? _thirdExample = "Loading...";
 
     private readonly Dictionary<UserQuestion, ApproachResponse> _questionAndAnswerMap = new();
     private bool _isLoadingPromptsInit;
@@ -119,7 +119,7 @@ public sealed partial class Chat
 
         try
         {
-            var question = new ChatTurn("About what this documentation?");
+            var question = new ChatTurn("Could you write summary of documents?");
             var request = new ChatRequest(new[] { question }, Settings.Approach, Settings.Overrides);
             var result = await ApiClient.ChatConversationAsync(request);
 

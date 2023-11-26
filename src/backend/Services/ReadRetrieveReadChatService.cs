@@ -175,7 +175,6 @@ public class ReadRetrieveReadChatService
             }
         }
 
-
         var createJsonPrompt = PromptFileService.ReadPromptsFromFile("create-json-prompt.txt", new Dictionary<string, string>
         {
             { "{documentContents}", documentContents }
