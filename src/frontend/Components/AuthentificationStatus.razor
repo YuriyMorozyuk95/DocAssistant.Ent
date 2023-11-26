@@ -5,15 +5,12 @@
 
 <AuthorizeView>
     <Authorized>
-        <h4>
-            Hello, @context.User.Identity.Name!
-            <a class="text-white text-decoration-none d-inline-block" href="#" @onclick="BeginSignOut">Log out</a>
-        </h4>
+        <h4>Hello, @context.User.Identity.Name!</h4>
+        <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Size="Size.Large"Title="Log out" OnClick="BeginSignOut" />
     </Authorized>
     <NotAuthorized>
-        <h4>
-            <a class="text-white text-decoration-none" href="authentication/login">Log in</a>
-        </h4>
+        <MudIconButton Icon="@Icons.Material.Filled.Login" Color="Color.Inherit" Size="Size.Large"
+                       Href="authentication/login" Title="Log in" />
     </NotAuthorized>
 </AuthorizeView>
 
@@ -22,6 +19,6 @@
     private async Task BeginSignOut(MouseEventArgs args)
     {
         await SignOutManager.SetSignOutState();
-        Navigation.NavigateTo("authentication/logout", true);
+        Navigation.NavigateTo("authentication/logout");
     }
 }
