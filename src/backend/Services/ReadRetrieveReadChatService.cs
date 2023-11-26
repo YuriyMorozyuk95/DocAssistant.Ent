@@ -109,7 +109,7 @@ public class ReadRetrieveReadChatService
         var answerWithFollowUpQuestion = new string(answer);
 
         var systemFollowUp = PromptFileService.ReadPromptsFromFile("system-follow-up.txt");
-        var systemFollowContent = PromptFileService.ReadPromptsFromFile("system-follow-up.txt",new Dictionary<string, string>
+        var systemFollowContent = PromptFileService.ReadPromptsFromFile("system-follow-up-content.txt",new Dictionary<string, string>
         {
             { "{answer}", answer }
         });

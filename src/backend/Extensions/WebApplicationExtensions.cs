@@ -107,7 +107,8 @@ internal static class WebApplicationExtensions
         [FromServices] IUploaderDocumentService service,
         CancellationToken cancellationToken)
     {
-        return service.GetDocuments(cancellationToken);
+        var doc = service.GetDocuments(cancellationToken);
+        return doc;
     }
 
     private static async Task<IResult> OnPostSynchronizeAsync(

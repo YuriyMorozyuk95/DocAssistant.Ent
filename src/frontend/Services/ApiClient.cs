@@ -162,5 +162,3 @@ public sealed class ApiClient(HttpClient httpClient)
         response.EnsureSuccessStatusCode();  
     } 
 }
-
-//TODO move and rename
