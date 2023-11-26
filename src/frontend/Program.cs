@@ -18,6 +18,13 @@ builder.Services.AddSpeechSynthesisServices();
 builder.Services.AddSpeechRecognitionServices();
 builder.Services.AddMudServices();
 
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddOidcAuthentication(options =>
+{
+    builder.Configuration.Bind("Auth0", options.ProviderOptions);
+    options.ProviderOptions.ResponseType = "code";
+});
+
 await JSHost.ImportAsync(
     moduleName: nameof(JavaScriptModule),
     moduleUrl: $"../js/iframe.js?{Guid.NewGuid()}" /* cache bust */);
