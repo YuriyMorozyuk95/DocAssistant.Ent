@@ -88,12 +88,13 @@ public class ReadRetrieveReadChatService
         // Get chat completions to generate the answer  
         (string answer, string thoughts) = await GetAnswerAsync(cancellationToken, chat, answerChat);
 
+        string?[] questions = { };
         // step 4
         // add follow up questions if requested
         // If follow-up questions are requested, generate them  
         if (overrides?.SuggestFollowupQuestions is true)
         {
-            answer = await UpdateAnswerWithFollowUpQuestionsAsync(cancellationToken, chat, answer);
+            (answer, questions) = await UpdateAnswerWithFollowUpQuestionsAsync(cancellationToken, chat, answer);
         }
 
         // Return the response  
@@ -101,10 +102,11 @@ public class ReadRetrieveReadChatService
             DataPoints: documentContentList,
             Answer: answer,
             Thoughts: thoughts,
-            CitationBaseUrl: _configuration.ToCitationBaseUrl());
+            CitationBaseUrl: _configuration.ToCitationBaseUrl(),
+            Questions: questions);
     }
 
-    private async Task<string> UpdateAnswerWithFollowUpQuestionsAsync(CancellationToken cancellationToken, IChatCompletion chat, string answer)
+    private async Task<(string answer, string?[] questions)> UpdateAnswerWithFollowUpQuestionsAsync(CancellationToken cancellationToken, IChatCompletion chat, string answer)
     {
         var answerWithFollowUpQuestion = new string(answer);
 
@@ -137,7 +139,7 @@ public class ReadRetrieveReadChatService
             answerWithFollowUpQuestion += $" <<{followUpQuestion}>> ";
         }
 
-        return answerWithFollowUpQuestion;
+        return (answer: answerWithFollowUpQuestion, questions: followUpQuestionsList.ToArray());
     }
 
     private async Task<(string answer, string thoughts)> GetAnswerAsync(CancellationToken cancellationToken, IChatCompletion chat, ChatHistory answerChat)

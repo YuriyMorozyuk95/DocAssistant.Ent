@@ -11,11 +11,15 @@ public sealed partial class Chat
     private string _lastReferenceQuestion = "";
     private bool _isReceivingResponse = false;
 
-    private string _firstExample = "yo";
+    private string? _firstExample = "yo";
+    private string? _secondExample = "hi";
+    private string? _thirdExample = "hi";
 
     private readonly Dictionary<UserQuestion, ApproachResponse> _questionAndAnswerMap = new();
-    private bool _isLoadingPrompts;
-    private Task _getCopilotPrompts;
+    private bool _isLoadingPromptsInit;
+    private bool _isExamplesPromptsInit;
+    private Task _copilotPromptsInitializing;
+    private Task _examplesPromptsInitialing;
 
     [Inject] public required ISessionStorageService SessionStorage { get; set; }
 
@@ -34,7 +38,8 @@ public sealed partial class Chat
     {
         // Instead of awaiting this async enumerable here, let's capture it in a task
         // and start it in the background. This way, we can await it in the UI.
-        _getCopilotPrompts = OnGetCopilotPromptsClickedAsync();
+        _copilotPromptsInitializing = OnCopilotPromptsInitializingAsync();
+        _examplesPromptsInitialing = OnExamplesPromptsInitialingAsync();
     }
 
     private Task OnAskQuestionAsync(string question)
@@ -92,9 +97,9 @@ public sealed partial class Chat
         await ApiClient.PostCopilotPromptsServerDataAsync(CopilotPrompts);
     }
 
-    private async Task OnGetCopilotPromptsClickedAsync()
+    private async Task OnCopilotPromptsInitializingAsync()
     {
-        _isLoadingPrompts = true;
+        _isLoadingPromptsInit = true;
 
         try
         {
@@ -102,7 +107,33 @@ public sealed partial class Chat
         }
         finally
         {
-            _isLoadingPrompts = false;
+            _isLoadingPromptsInit = false;
+            StateHasChanged();
+        }
+
+    }
+
+    private async Task OnExamplesPromptsInitialingAsync()
+    {
+        _isExamplesPromptsInit = true;
+
+        try
+        {
+            var question = new ChatTurn("About what this documentation?");
+            var request = new ChatRequest(new[] { question }, Settings.Approach, Settings.Overrides);
+            var result = await ApiClient.ChatConversationAsync(request);
+
+            if (result.Response?.Questions?.Length > 2)
+            {
+                _firstExample = result.Response.Questions[0];
+                _secondExample = result.Response.Questions[1];
+                _thirdExample = result.Response.Questions[2];
+
+            }
+        }
+        finally
+        {
+            _isExamplesPromptsInit = false;
             StateHasChanged();
         }
 
