@@ -32,14 +32,14 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
     private readonly SearchClient _indexSectionClient;
     private readonly SearchIndexClient _searchIndexClient;
     private readonly DocumentAnalysisClient _documentAnalysisClient;
-    private readonly ILogger<AzureSearchAzureSearchEmbedService>? _logger;
+    private readonly ILogger<AzureSearchAzureSearchEmbedService> _logger;
     private readonly IStorageService _storageService;
 
     public AzureSearchAzureSearchEmbedService(OpenAIClient openAiClient,
         SearchClient indexSectionClient,
         SearchIndexClient searchIndexClient,
         DocumentAnalysisClient documentAnalysisClient,
-        ILogger<AzureSearchAzureSearchEmbedService>? logger,
+        ILogger<AzureSearchAzureSearchEmbedService> logger,
         IStorageService storageService)
     {
         _openAiClient = openAiClient;

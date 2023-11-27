@@ -48,7 +48,7 @@ public class ReadRetrieveReadChatService
     // This method generates a reply to a given chat history.  
     public async Task<ApproachResponse> ReplyAsync(
         ChatTurn[] history,
-        RequestOverrides? overrides,
+        RequestOverrides overrides,
         CancellationToken cancellationToken = default)
     {
         var response = new ApproachResponse();
@@ -62,17 +62,17 @@ public class ReadRetrieveReadChatService
 
         // Get chat completion and text embedding generation services from the kernel  
         IChatCompletion chat = _kernel.GetService<IChatCompletion>();
-        ITextEmbeddingGeneration? embedding = _kernel.GetService<ITextEmbeddingGeneration>();
+        ITextEmbeddingGeneration embedding = _kernel.GetService<ITextEmbeddingGeneration>();
 
         // If retrieval mode is not "Text" and embedding is not null, generate embeddings for the question 
         string question = GetQuestionFromHistory(history);
 
-        float[]? embeddings = await GenerateEmbeddingsAsync(overrides, cancellationToken, embedding, question);
+        float[] embeddings = await GenerateEmbeddingsAsync(overrides, cancellationToken, embedding, question);
 
         // step 1
         // use llm to get query if retrieval mode is not vector
         // If retrieval mode is not "Vector", generate a search query using the chat completion service  
-        string? query = await GenerateQueryAsync(overrides, cancellationToken, chat, question);
+        string query = await GenerateQueryAsync(overrides, cancellationToken, chat, question);
 
         // step 2
         // use query to search related docs
@@ -89,7 +89,7 @@ public class ReadRetrieveReadChatService
         // Get chat completions to generate the answer  
         (string answer, string thoughts) = await GetAnswerAsync(cancellationToken, chat, answerChat);
 
-        string?[] questions = { };
+        string[] questions = { };
         // step 4
         // add follow up questions if requested
         // If follow-up questions are requested, generate them  
@@ -107,7 +107,7 @@ public class ReadRetrieveReadChatService
             questions: questions);
     }
 
-    private async Task<(string answer, string?[] questions)> UpdateAnswerWithFollowUpQuestionsAsync(CancellationToken cancellationToken, IChatCompletion chat, string answer)
+    private async Task<(string answer, string[] questions)> UpdateAnswerWithFollowUpQuestionsAsync(CancellationToken cancellationToken, IChatCompletion chat, string answer)
     {
         var answerWithFollowUpQuestion = new string(answer);
 
@@ -134,7 +134,7 @@ public class ReadRetrieveReadChatService
         _logger.LogInformation("followUpQuestionsJson: {x}", followUpQuestionsJson);
 
         var followUpQuestionsObject = JsonSerializer.Deserialize<JsonElement>(followUpQuestionsJson);
-        var followUpQuestionsList = followUpQuestionsObject.EnumerateArray().Select(x => x.GetString()).ToList();
+        var followUpQuestionsList = followUpQuestionsObject.EnumerateArray().Select(x => x.GetString() as string).ToList();
         foreach (var followUpQuestion in followUpQuestionsList)
         {
             answerWithFollowUpQuestion += $" <<{followUpQuestion}>> ";
@@ -198,14 +198,14 @@ public class ReadRetrieveReadChatService
         return documentContents;
     }
 
-    private Task<SupportingContentRecord[]> GetQueryDocuments(RequestOverrides? overrides, CancellationToken cancellationToken, string? query, float[]? embeddings)
+    private Task<SupportingContentRecord[]> GetQueryDocuments(RequestOverrides overrides, CancellationToken cancellationToken, string query, float[] embeddings)
     {
         return _searchClient.QueryDocumentsAsync(query, embeddings, overrides, cancellationToken);
     }
 
-    private async Task<string?> GenerateQueryAsync(RequestOverrides? overrides, CancellationToken cancellationToken, IChatCompletion chat, string question)
+    private async Task<string> GenerateQueryAsync(RequestOverrides overrides, CancellationToken cancellationToken, IChatCompletion chat, string question)
     {
-        string? query = null;
+        string query = null;
         if (overrides?.RetrievalMode != "Vector")
         {
             var searchPrompt = PromptFileService.ReadPromptsFromFile("search-prompt.txt");
@@ -234,9 +234,9 @@ public class ReadRetrieveReadChatService
         return query;
     }
 
-    private async Task<float[]?> GenerateEmbeddingsAsync(RequestOverrides? overrides, CancellationToken cancellationToken, ITextEmbeddingGeneration embedding, string question)
+    private async Task<float[]> GenerateEmbeddingsAsync(RequestOverrides overrides, CancellationToken cancellationToken, ITextEmbeddingGeneration embedding, string question)
     {
-        float[]? embeddings = null;
+        float[] embeddings = null;
         if (overrides?.RetrievalMode != "Text" && embedding is not null)
         {
             embeddings = (await embedding.GenerateEmbeddingAsync(question, cancellationToken: cancellationToken)).ToArray();

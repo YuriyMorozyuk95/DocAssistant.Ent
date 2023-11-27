@@ -12,8 +12,8 @@ public class StorageService : IStorageService
 {
     private readonly BlobServiceClient _blobServiceClient;
     private readonly IConfiguration _configuration;
-    private BlobContainerClient? _inputBlobContainerClient = null;
-    private BlobContainerClient? _outputBlobContainerClient = null;
+    private BlobContainerClient _inputBlobContainerClient = null;
+    private BlobContainerClient _outputBlobContainerClient = null;
 
     public StorageService(BlobServiceClient blobServiceClient, IConfiguration configuration)
     {

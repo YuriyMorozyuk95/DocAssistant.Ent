@@ -23,7 +23,7 @@ if (builder.Environment.IsDevelopment())
 else
 {
 #pragma warning disable CS8321 // Local function is declared but never used
-    static string? GetEnvVar(string key) => Environment.GetEnvironmentVariable(key);
+    static string GetEnvVar(string key) => Environment.GetEnvironmentVariable(key);
 #pragma warning restore CS8321 // Local function is declared but never used
 
     builder.Services.AddStackExchangeRedisCache(options =>
