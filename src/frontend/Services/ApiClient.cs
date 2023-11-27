@@ -4,11 +4,18 @@ using System.Net.Http.Headers;
 
 namespace ClientApp.Services;
 
-public sealed class ApiClient(HttpClient httpClient)
+public sealed class ApiClient
 {
+    private readonly HttpClient _httpClient;
+
+    public ApiClient(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
+    }
+
     public async Task<ImageResponse?> RequestImageAsync(PromptRequest request)
     {
-        var response = await httpClient.PostAsJsonAsync(
+        var response = await _httpClient.PostAsJsonAsync(
             "api/images", request, SerializerOptions.Default);
 
         response.EnsureSuccessStatusCode();
@@ -42,7 +49,7 @@ public sealed class ApiClient(HttpClient httpClient)
             content.Headers.Add("X-CSRF-TOKEN-FORM", cookie);
             content.Headers.Add("X-CSRF-TOKEN-HEADER", cookie);
 
-            var response = await httpClient.PostAsync("api/documents", content);
+            var response = await _httpClient.PostAsync("api/documents", content);
 
             response.EnsureSuccessStatusCode();
 
@@ -62,7 +69,7 @@ public sealed class ApiClient(HttpClient httpClient)
     public async IAsyncEnumerable<DocumentResponse> GetDocumentsAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var response = await httpClient.GetAsync("api/documents", cancellationToken);
+        var response = await _httpClient.GetAsync("api/documents", cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
@@ -94,7 +101,7 @@ public sealed class ApiClient(HttpClient httpClient)
         content.Headers.Add("X-CSRF-TOKEN-FORM", cookie);
         content.Headers.Add("X-CSRF-TOKEN-HEADER", cookie);
 
-        var response = await httpClient.PostAsync("api/synchronize", content);
+        var response = await _httpClient.PostAsync("api/synchronize", content);
 
         response.EnsureSuccessStatusCode();
     }
@@ -115,7 +122,7 @@ public sealed class ApiClient(HttpClient httpClient)
         using var body = new StringContent(
             json, Encoding.UTF8, "application/json");
 
-        var response = await httpClient.PostAsync(apiRoute, body);
+        var response = await _httpClient.PostAsync(apiRoute, body);
 
         if (response.IsSuccessStatusCode)
         {
@@ -146,14 +153,14 @@ public sealed class ApiClient(HttpClient httpClient)
 
     public async Task<CopilotPromptsRequestResponse> GetCopilotPromptsAsync()  
     {  
-        var response = await httpClient.GetAsync("api/copilot-prompts");  
+        var response = await _httpClient.GetAsync("api/copilot-prompts");  
         response.EnsureSuccessStatusCode();  
         return (await response.Content.ReadFromJsonAsync<CopilotPromptsRequestResponse>())!;  
     }  
   
     public async Task PostCopilotPromptsServerDataAsync(CopilotPromptsRequestResponse updatedData)  
     {  
-        var response = await httpClient.PostAsJsonAsync("api/copilot-prompts", updatedData);  
+        var response = await _httpClient.PostAsJsonAsync("api/copilot-prompts", updatedData);  
         response.EnsureSuccessStatusCode();  
     } 
 }

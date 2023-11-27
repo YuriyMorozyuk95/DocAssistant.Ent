@@ -51,6 +51,7 @@ public class ReadRetrieveReadChatService
         RequestOverrides? overrides,
         CancellationToken cancellationToken = default)
     {
+        var response = new ApproachResponse();
         // Get the top results, whether to use semantic captions and ranker, and the category to exclude from overrides
         //TODO permission & category
         var top = overrides?.Top ?? 3;
@@ -99,11 +100,11 @@ public class ReadRetrieveReadChatService
 
         // Return the response  
         return new ApproachResponse(
-            DataPoints: documentContentList,
-            Answer: answer,
-            Thoughts: thoughts,
-            CitationBaseUrl: _configuration.ToCitationBaseUrl(),
-            Questions: questions);
+            dataPoints: documentContentList,
+            answer: answer,
+            thoughts: thoughts,
+            citationBaseUrl: _configuration.ToCitationBaseUrl(),
+            questions: questions);
     }
 
     private async Task<(string answer, string?[] questions)> UpdateAnswerWithFollowUpQuestionsAsync(CancellationToken cancellationToken, IChatCompletion chat, string answer)

@@ -2,11 +2,43 @@
 
 namespace Shared.Models;
 
-public record SupportingContentRecord(string Title, string Content);
-public record ApproachResponse(
-    string Answer,
-    string? Thoughts,
-    SupportingContentRecord[] DataPoints, // title, content
-    string CitationBaseUrl,
-    string?[] Questions,
-    string? Error = null);
+public class SupportingContentRecord  
+{  
+    public SupportingContentRecord(string title, string content)  
+    {  
+        Title = title;  
+        Content = content;  
+    }  
+  
+    public string Title { get; set; }  
+    public string Content { get; set; }  
+}  
+ 
+public class ApproachResponse  
+{
+    public ApproachResponse()
+    {
+        Answer = string.Empty;
+        Thoughts = string.Empty;
+        DataPoints = Array.Empty<SupportingContentRecord>();
+        CitationBaseUrl = string.Empty;
+        Questions = Array.Empty<string?>();
+        Error = string.Empty;
+    }
+    public ApproachResponse(string answer, string? thoughts, SupportingContentRecord[] dataPoints, string citationBaseUrl, string[] questions, string? error = null)  
+    {  
+        Answer = answer;  
+        Thoughts = thoughts;  
+        DataPoints = dataPoints;  
+        CitationBaseUrl = citationBaseUrl;  
+        Questions = questions;  
+        Error = error;  
+    }  
+  
+    public string Answer { get;set; }  
+    public string? Thoughts { get; set; }  
+    public SupportingContentRecord[] DataPoints { get; set; }  
+    public string CitationBaseUrl { get; set; }  
+    public string[] Questions { get; set; }  
+    public string? Error { get; set; }  
+}  

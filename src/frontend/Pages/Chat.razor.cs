@@ -11,9 +11,9 @@ public sealed partial class Chat
     private string _lastReferenceQuestion = "";
     private bool _isReceivingResponse = false;
 
-    private string? _firstExample = "Loading...";
-    private string? _secondExample = "Loading...";
-    private string? _thirdExample = "Loading...";
+    private string? _firstExample;
+    private string? _secondExample;
+    private string? _thirdExample;
 
     private readonly Dictionary<UserQuestion, ApproachResponse> _questionAndAnswerMap = new();
     private bool _isLoadingPromptsInit;
@@ -128,8 +128,13 @@ public sealed partial class Chat
                 _firstExample = result.Response.Questions[0];
                 _secondExample = result.Response.Questions[1];
                 _thirdExample = result.Response.Questions[2];
-
             }
+        }
+        catch(Exception e)
+        {
+            var a = e.Message;
+            var b = e.StackTrace;
+            throw;
         }
         finally
         {
