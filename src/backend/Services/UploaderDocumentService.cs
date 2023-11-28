@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using System.Threading;
+
 using Azure;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
@@ -9,7 +11,7 @@ namespace MinimalApi.Services;
 public interface IUploaderDocumentService
 {
     IAsyncEnumerable<DocumentResponse> GetDocuments(CancellationToken cancellationToken);
-    Task UploadToAzureIndex(CancellationToken cancellationToken);
+    Task UploadToAzureIndex();
 }
 public class UploaderDocumentService : IUploaderDocumentService
 {
@@ -33,8 +35,7 @@ public class UploaderDocumentService : IUploaderDocumentService
         _storageService = storageService;
     }
 
-    public async IAsyncEnumerable<DocumentResponse> GetDocuments(
-        [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<DocumentResponse> GetDocuments([EnumeratorCancellation]CancellationToken cancellationToken = default)
     {
         var container = await _storageService.GetInputBlobContainerClient();
         await foreach (var blob in container.GetBlobsAsync(cancellationToken: cancellationToken))
@@ -72,7 +73,7 @@ public class UploaderDocumentService : IUploaderDocumentService
         }
     }
 
-    public async Task UploadToAzureIndex(CancellationToken cancellationToken)
+    public async Task UploadToAzureIndex()
     {
         var searchIndexName = _configuration["AzureSearchIndex"];
         var embeddingModel = _configuration["AzureOpenAiEmbeddingDeployment"];
@@ -88,7 +89,7 @@ public class UploaderDocumentService : IUploaderDocumentService
 
         var inputContainer = await _storageService.GetInputBlobContainerClient();
 
-        await foreach(var document in GetDocuments(cancellationToken))
+        await foreach(var document in GetDocuments())
         {
             var fileName = document.Name;
             var blobClient = inputContainer.GetBlobClient(document.Name);
@@ -123,13 +124,13 @@ public class UploaderDocumentService : IUploaderDocumentService
             }
 
             //TODO add DocumentProcessingStatus.Failed in case of fail
-            BlobProperties properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);  
+            BlobProperties properties = await blobClient.GetPropertiesAsync();  
             var metadata = properties.Metadata;
 
             metadata[nameof(DocumentProcessingStatus)] = DocumentProcessingStatus.Succeeded.ToString();
             metadata[nameof(EmbeddingType)] = EmbeddingType.AzureSearch.ToString();
 
-            await blobClient.SetMetadataAsync(metadata, cancellationToken: cancellationToken); 
+            await blobClient.SetMetadataAsync(metadata); 
         }
     }
 

@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using Shared.Models;
+
 namespace ClientApp.Tests;
 
 #pragma warning disable CA1416 // Validate platform compatibility
@@ -48,7 +50,11 @@ public class AnswerParserTests
         List<CitationDetails> expectedCitations,
         HashSet<string> expectedFollowups)
     {
-        var html = Answer.ParseAnswerToHtml(answerText, "content");
+        var html = Answer.ParseAnswerToHtml(
+            answerText,
+            "content",
+            new[] { new SupportingContentRecord("Northwind_Health_Plus_Benefits_Details-70.pdf", string.Empty, "url")});
+        ;
         Assert.Equal(expectedHtml, html.AnswerHtml);
         Assert.Equal(html.Citations, expectedCitations);
         Assert.Equal(html.FollowupQuestions, expectedFollowups);

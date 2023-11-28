@@ -6,7 +6,7 @@ namespace ClientApp.Components;
 
 public sealed partial class Answer
 {
-    internal static HtmlParsedAnswer ParseAnswerToHtml(string answer, string citationBaseUrl)
+    internal static HtmlParsedAnswer ParseAnswerToHtml(string answer, string citationBaseUrl, SupportingContentRecord[] supportingContentRecords)
     {
         var citations = new List<CitationDetails>();
         var followupQuestions = new HashSet<string>();
@@ -45,7 +45,13 @@ public sealed partial class Answer
                     <sup class="mud-chip mud-chip-text mud-chip-color-info rounded pa-1">{citationNumber}</sup>
                     """;
             }
-        });
+        }).ToArray();
+
+        foreach (var citation in citations)
+        {
+            var originUri = supportingContentRecords.FirstOrDefault(s => string.Equals(s.Title, citation.Name, StringComparison.InvariantCultureIgnoreCase))?.OriginUri;
+            citation.OriginUri = originUri;
+        }
 
         return new HtmlParsedAnswer(
             string.Join("", fragments),
@@ -61,7 +67,19 @@ public sealed partial class Answer
     private static partial Regex SplitRegex();
 }
 
-internal readonly record struct HtmlParsedAnswer(
-    string AnswerHtml,
-    List<CitationDetails> Citations,
-    HashSet<string> FollowupQuestions);
+internal class HtmlParsedAnswer  
+{  
+    public HtmlParsedAnswer(string answerHtml, List<CitationDetails> citations, HashSet<string> followupQuestions)  
+    {  
+        this.AnswerHtml = answerHtml;  
+        this.Citations = citations;  
+        this.FollowupQuestions = followupQuestions;  
+    }  
+  
+    public string AnswerHtml { get; set; }  
+  
+    public List<CitationDetails> Citations { get; set; }  
+  
+    public HashSet<string> FollowupQuestions { get; set; }  
+}  
+

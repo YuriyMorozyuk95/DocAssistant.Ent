@@ -9,7 +9,7 @@ public sealed partial class PdfViewerDialog
     
     [Parameter] public required string FileName { get; set; }
     [Parameter] public required string BaseUrl { get; set; }
-    [Parameter] public string OriginUrl { get; set; } = null;
+    [Parameter] public string OriginUri { get; set; }
 
     [CascadingParameter] public required MudDialogInstance Dialog { get; set; }
 

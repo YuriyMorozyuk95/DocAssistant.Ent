@@ -1,7 +1,7 @@
 ﻿<MudGrid Justify="Justify.Center">
-@if (_parsedAnswer.HasValue is true)
+@if (_parsedAnswer is not null)
 {
-    var answer = _parsedAnswer.Value;
+    var answer = _parsedAnswer;
     var html = answer.AnswerHtml;
 
     <MudItem xs="12">

@@ -71,7 +71,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
                 await UploadCorpusAsync(corpusName, page.Text, originDocUrl);
             }
 
-            var sections = CreateSections(pageMap, blobName);
+            var sections = CreateSections(pageMap, blobName, originDocUrl.ToString());
 
             await IndexSectionsAsync(searchIndexName, sections, blobName, embeddingModelName);
 
@@ -293,7 +293,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
     }
 
     private IEnumerable<Section> CreateSections(
-        IReadOnlyList<PageDetail> pageMap, string blobName)
+        IReadOnlyList<PageDetail> pageMap, string blobName, string sourceFileUri)
     {
         const int maxSectionLength = 1_000;
         const int sentenceSearchLimit = 100;
@@ -367,7 +367,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
                 Id: MatchInSetRegex().Replace($"{blobName}-{start}", "_").TrimStart('_'),
                 Content: sectionText,
                 SourcePage: BlobNameFromFilePage(blobName, FindPage(pageMap, start)),
-                SourceFile: blobName);
+                SourceFile: sourceFileUri);
 
             var lastTableStart = sectionText.LastIndexOf("<table", StringComparison.Ordinal);
             if (lastTableStart > 2 * sentenceSearchLimit && lastTableStart > sectionText.LastIndexOf("</table", StringComparison.Ordinal))
@@ -400,7 +400,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
                 Id: MatchInSetRegex().Replace($"{blobName}-{start}", "_").TrimStart('_'),
                 Content: allText[start..end],
                 SourcePage: BlobNameFromFilePage(blobName, FindPage(pageMap, start)),
-                SourceFile: blobName);
+                SourceFile: sourceFileUri);
         }
     }
 
@@ -448,7 +448,6 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
                     ["sourcepage"] = section.SourcePage,
                     ["sourcefile"] = section.SourceFile,
                     ["embedding"] = embedding,
-                    ["originUri"] = section.SourceFile,
                 }));
 
             iteration++;
