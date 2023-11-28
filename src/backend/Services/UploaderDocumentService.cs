@@ -112,7 +112,7 @@ public class UploaderDocumentService : IUploaderDocumentService
                     pdfDocument.Save(tempFileName);
 
                     await using var tempStream = File.OpenRead(tempFileName);
-                    await _azureSearchEmbedService.EmbedBlob(tempStream, chunkName, searchIndexName!, embeddingModel!);
+                    await _azureSearchEmbedService.EmbedBlob(tempStream, chunkName, searchIndexName!, embeddingModel!, document.Url);
 
                     //Add metadata
                 }
