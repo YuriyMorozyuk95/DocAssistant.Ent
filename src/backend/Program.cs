@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,18 @@ builder.Services.AddRazorPages();
 builder.Services.AddCrossOriginResourceSharing();
 builder.Services.AddAzureServices();
 builder.Services.AddAntiforgery(options => { options.HeaderName = "X-CSRF-TOKEN-HEADER"; options.FormFieldName = "X-CSRF-TOKEN-FORM"; });
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+    {
+        var authority = $"https://{builder.Configuration["Auth0:Domain"]}";
+        options.Authority = authority;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidAudience = builder.Configuration["Auth0:Audience"],
+            ValidIssuer = authority
+        };
+    });
 
 if (builder.Environment.IsDevelopment())
 {
@@ -88,6 +101,9 @@ app.UseBlazorFrameworkFiles();
 //app.UseAntiforgery();
 app.MapRazorPages();
 app.MapControllers();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 //app.Use(next => context =>
 //{
