@@ -31,7 +31,7 @@ internal static class WebApplicationExtensions
         return app;
     }
 
-    private static async Task<IResult> OnPostCopilotPromptsAsync(HttpContext context, [FromServices] ILogger<AzureBlobStorageService> logger)
+    private static async Task<IResult> OnPostCopilotPromptsAsync(HttpContext context, [FromServices] ILogger<CopilotPromptsRequestResponse> logger)
     {
         logger.LogInformation("Write prompt files");
 
@@ -40,27 +40,27 @@ internal static class WebApplicationExtensions
         {
             PromptFileService.UpdatePromptsToFile(PromptFileNames.CreateAnswer, updatedData.CreateAnswer);
             PromptFileService.UpdatePromptsToFile(PromptFileNames.CreateJsonPrompt, updatedData.CreateJsonPrompt);
-            PromptFileService.UpdatePromptsToFile("create-json-prompt-2.txt", updatedData.CreateJsonPrompt);
-            PromptFileService.UpdatePromptsToFile("search-prompt.txt", updatedData.SearchPrompt);
-            PromptFileService.UpdatePromptsToFile("system-follow-up.txt", updatedData.SystemFollowUp);
-            PromptFileService.UpdatePromptsToFile("system-follow-up-content.txt", updatedData.SystemFollowUpContent);
+            PromptFileService.UpdatePromptsToFile(PromptFileNames.CreateJsonPrompt2, updatedData.CreateJsonPrompt2);
+            PromptFileService.UpdatePromptsToFile(PromptFileNames.SearchPrompt, updatedData.SearchPrompt);
+            PromptFileService.UpdatePromptsToFile(PromptFileNames.SystemFollowUp, updatedData.SystemFollowUp);
+            PromptFileService.UpdatePromptsToFile(PromptFileNames.SystemFollowUpContent, updatedData.SystemFollowUpContent);
         }
 
         return TypedResults.Ok();
     }
 
-    private static CopilotPromptsRequestResponse OnGetCopilotPrompts([FromServices] ILogger<AzureBlobStorageService> logger)
+    private static CopilotPromptsRequestResponse OnGetCopilotPrompts([FromServices] ILogger<CopilotPromptsRequestResponse> logger)
     {
         logger.LogInformation("Load file contents documents");
 
         var response = new CopilotPromptsRequestResponse
         {
             CreateAnswer = PromptFileService.ReadPromptsFromFile(PromptFileNames.CreateAnswer),
-            CreateJsonPrompt = PromptFileService.ReadPromptsFromFile("create-json-prompt.txt"),
-            CreateJsonPrompt2 = PromptFileService.ReadPromptsFromFile("create-json-prompt-2.txt"),
-            SearchPrompt = PromptFileService.ReadPromptsFromFile("search-prompt.txt"),
-            SystemFollowUp = PromptFileService.ReadPromptsFromFile("system-follow-up.txt"),
-            SystemFollowUpContent = PromptFileService.ReadPromptsFromFile("system-follow-up-content.txt"),
+            CreateJsonPrompt = PromptFileService.ReadPromptsFromFile(PromptFileNames.CreateJsonPrompt),
+            CreateJsonPrompt2 = PromptFileService.ReadPromptsFromFile(PromptFileNames.CreateJsonPrompt2),
+            SearchPrompt = PromptFileService.ReadPromptsFromFile(PromptFileNames.SearchPrompt),
+            SystemFollowUp = PromptFileService.ReadPromptsFromFile(PromptFileNames.SystemFollowUp),
+            SystemFollowUpContent = PromptFileService.ReadPromptsFromFile(PromptFileNames.SystemFollowUpContent),
         };
 
         return response;
