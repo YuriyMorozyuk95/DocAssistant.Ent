@@ -5,6 +5,11 @@ using System.Net;
 using Azure;
 using Azure.Core.Pipeline;
 using Azure.Search.Documents.Indexes;
+using DocAssistant.Data;
+using DocAssistant.Data.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Azure.Cosmos;
+using Microsoft.IdentityModel.Tokens;
 
 namespace MinimalApi.Extensions;
 
@@ -140,5 +145,53 @@ internal static class ServiceCollectionExtensions
                             .AllowAnyMethod()));
 
         return services;
+    }
+
+    internal static IServiceCollection AddAuthentication(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+            {
+                var authority = $"https://{configuration["Auth0:Domain"]}";
+                options.Authority = authority;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidAudience = configuration["Auth0:Audience"],
+                    ValidIssuer = authority
+                };
+            });
+
+        // Cosmos Db configuration
+#pragma warning disable CA2000
+        var cosmosClient = GetCosmosClient(configuration);
+#pragma warning restore CA2000
+        var cosmosDbName = configuration["CosmosDB:Name"];
+        var userContainer =
+            cosmosClient.GetContainer(cosmosDbName, "User");
+        var permissionContainer =
+            cosmosClient.GetContainer(cosmosDbName, "Permissions");
+
+        services.AddSingleton<IUserRepository, UserRepository>(_ =>
+            new UserRepository(userContainer));
+        services.AddSingleton<IPermissionRepository, PermissionRepository>(_ =>
+            new PermissionRepository(permissionContainer));
+
+        return services;
+    }
+
+    private static CosmosClient GetCosmosClient(IConfiguration configuration)
+    {
+        var cosmosDbConnectionUri = configuration["CosmosDB:EndpointUrl"];
+        var cosmosDbKey = configuration["CosmosDB:Key"];
+
+        var cosmosClientOptions = new CosmosClientOptions
+        {
+            AllowBulkExecution = true,
+            MaxRetryAttemptsOnRateLimitedRequests = 20,
+            MaxRetryWaitTimeOnRateLimitedRequests = TimeSpan.FromSeconds(60)
+        };
+
+        var cosmosClient = new CosmosClient(cosmosDbConnectionUri, cosmosDbKey, cosmosClientOptions);
+        return cosmosClient;
     }
 }
