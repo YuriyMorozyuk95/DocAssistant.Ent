@@ -101,7 +101,7 @@ public class ReadRetrieveReadChatService
 
             string documentContents;
             SupportingContentRecord[] documentContentList = { };
-            if (query is not null)
+            if (embeddings.Count() != 0 || query != null)
             {
                 documentContentList = await GetQueryDocuments(overrides, cancellationToken, query, embeddings);
                 documentContents = GetDocumentContents(documentContentList);
