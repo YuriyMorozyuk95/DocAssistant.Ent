@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <None Remove="Prompts\create-answer.txt" />
+    <None Remove="Prompts\create-json-prompt-2.txt" />
     <None Remove="Prompts\create-json-prompt.txt" />
     <None Remove="Prompts\search-prompt.txt" />
     <None Remove="Prompts\system-follow-up-content.txt" />
@@ -20,6 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Prompts\create-json-prompt-2.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Prompts\system-follow-up-content.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

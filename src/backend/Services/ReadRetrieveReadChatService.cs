@@ -52,59 +52,122 @@ public class ReadRetrieveReadChatService
         CancellationToken cancellationToken = default)
     {
         var response = new ApproachResponse();
-        // Get the top results, whether to use semantic captions and ranker, and the category to exclude from overrides
-        //TODO permission & category
-        var top = overrides?.Top ?? 3;
-        var useSemanticCaptions = overrides?.SemanticCaptions ?? false;
-        var useSemanticRanker = overrides?.SemanticRanker ?? false;
-        var excludeCategory = overrides?.ExcludeCategory ?? null;
-        var filter = excludeCategory is null ? null : $"category ne '{excludeCategory}'";
-
-        // Get chat completion and text embedding generation services from the kernel  
-        IChatCompletion chat = _kernel.GetService<IChatCompletion>();
-        ITextEmbeddingGeneration embedding = _kernel.GetService<ITextEmbeddingGeneration>();
-
-        // If retrieval mode is not "Text" and embedding is not null, generate embeddings for the question 
-        string question = GetQuestionFromHistory(history);
-
-        float[] embeddings = await GenerateEmbeddingsAsync(overrides, cancellationToken, embedding, question);
-
-        // step 1
-        // use llm to get query if retrieval mode is not vector
-        // If retrieval mode is not "Vector", generate a search query using the chat completion service  
-        string query = await GenerateQueryAsync(overrides, cancellationToken, chat, question);
-
-        // step 2
-        // use query to search related docs
-        // Use the search query to search related documents
-        var documentContentList = await GetQueryDocuments(overrides, cancellationToken, query, embeddings);
-        string documentContents = GetDocumentContents(documentContentList);
-
-        // step 3
-        // put together related docs and conversation history to generate answer
-        // Create a new chat to generate the answer  
-        var answerChat = CreateAnswerChat(history, chat, documentContents);
-
-        // get answer
-        // Get chat completions to generate the answer  
-        (string answer, string thoughts) = await GetAnswerAsync(cancellationToken, chat, answerChat);
-
-        string[] questions = { };
-        // step 4
-        // add follow up questions if requested
-        // If follow-up questions are requested, generate them  
-        if (overrides?.SuggestFollowupQuestions is true)
+        var errorBuilder = new StringBuilder();
+        try
         {
-            (answer, questions) = await UpdateAnswerWithFollowUpQuestionsAsync(cancellationToken, chat, answer);
-        }
+            // Get the top results, whether to use semantic captions and ranker, and the category to exclude from overrides
+            //TODO permission & category
+            var top = overrides?.Top ?? 3;
+            var useSemanticCaptions = overrides?.SemanticCaptions ?? false;
+            var useSemanticRanker = overrides?.SemanticRanker ?? false;
+            var excludeCategory = overrides?.ExcludeCategory ?? null;
+            var filter = excludeCategory is null ? null : $"category ne '{excludeCategory}'";
 
-        // Return the response  
-        return new ApproachResponse(
-            dataPoints: documentContentList,
-            answer: answer,
-            thoughts: thoughts,
-            citationBaseUrl: _configuration.ToCitationBaseUrl(),
-            questions: questions);
+            // Get chat completion and text embedding generation services from the kernel  
+            IChatCompletion chat = _kernel.GetService<IChatCompletion>();
+            ITextEmbeddingGeneration embedding = _kernel.GetService<ITextEmbeddingGeneration>();
+
+            // If retrieval mode is not "Text" and embedding is not null, generate embeddings for the question 
+            string question = GetQuestionFromHistory(history);
+
+            float[] embeddings;
+            try
+            {
+                embeddings = await GenerateEmbeddingsAsync(overrides, cancellationToken, embedding, question);
+            }
+            catch (Exception e)
+            {
+                throw new InvalidOperationException("Failed to generate embeddings", e);
+            }
+
+            // step 1
+            // use llm to get query if retrieval mode is not vector
+            // If retrieval mode is not "Vector", generate a search query using the chat completion service
+            string query;
+            try
+            {
+                query = await GenerateQueryAsync(overrides, cancellationToken, chat, question);
+            }
+            catch (Exception e)
+            {
+                errorBuilder.AppendLine($"Failed to generate query {e.Message}");
+                _logger.LogError(e, "Failed to generate query");
+                query = null;
+            }
+
+            // step 2
+            // use query to search related docs
+            // Use the search query to search related documents
+
+            string documentContents;
+            SupportingContentRecord[] documentContentList = { };
+            if (query is not null)
+            {
+                documentContentList = await GetQueryDocuments(overrides, cancellationToken, query, embeddings);
+                documentContents = GetDocumentContents(documentContentList);
+            }
+            else
+            {
+                documentContents = string.Empty;
+            }
+
+
+            // step 3
+            // put together related docs and conversation history to generate answer
+            // Create a new chat to generate the answer
+            ChatHistory answerChatHistory = null;
+            try
+            {
+                answerChatHistory = CreateAnswerChat(history, chat, documentContents, errorBuilder);
+            }
+            catch (Exception e)
+            {
+                errorBuilder.AppendLine($"Failed to create answer chat {e.Message}");
+                _logger.LogError(e, "Failed to create answer chat");
+            }
+
+            string answer = null;
+            string thoughts = null;
+            try
+            {
+                // get answer
+                // Get chat completions to generate the answer  
+                (answer, thoughts) = await GetAnswerAsync(cancellationToken, chat, answerChatHistory, errorBuilder, documentContents, history);
+            }
+            catch (Exception e)
+            {
+                throw new InvalidOperationException($"Failed to get answer {e.Message}", e);
+            }
+
+            string[] questions = { };
+            try
+            {
+                // step 4
+                // add follow up questions if requested
+                // If follow-up questions are requested, generate them  
+                if (overrides?.SuggestFollowupQuestions is true)
+                {
+                    (answer, questions) = await UpdateAnswerWithFollowUpQuestionsAsync(cancellationToken, chat, answer);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new InvalidOperationException($"Failed to get follow up questions {e.Message}", e);
+            }
+
+            // Return the response  
+            return new ApproachResponse(
+                dataPoints: documentContentList,
+                answer: answer,
+                thoughts: thoughts,
+                citationBaseUrl: _configuration.ToCitationBaseUrl(),
+                questions: questions);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to get answer");
+            return new ApproachResponse(error: e.Message);
+        }
     }
 
     private async Task<(string answer, string[] questions)> UpdateAnswerWithFollowUpQuestionsAsync(CancellationToken cancellationToken, IChatCompletion chat, string answer)
@@ -112,7 +175,7 @@ public class ReadRetrieveReadChatService
         var answerWithFollowUpQuestion = new string(answer);
 
         var systemFollowUp = PromptFileService.ReadPromptsFromFile("system-follow-up.txt");
-        var systemFollowContent = PromptFileService.ReadPromptsFromFile("system-follow-up-content.txt",new Dictionary<string, string>
+        var systemFollowContent = PromptFileService.ReadPromptsFromFile("system-follow-up-content.txt", new Dictionary<string, string>
         {
             { "{answer}", answer }
         });
@@ -143,7 +206,13 @@ public class ReadRetrieveReadChatService
         return (answer: answerWithFollowUpQuestion, questions: followUpQuestionsList.ToArray());
     }
 
-    private async Task<(string answer, string thoughts)> GetAnswerAsync(CancellationToken cancellationToken, IChatCompletion chat, ChatHistory answerChat)
+    private async Task<(string answer, string thoughts)> GetAnswerAsync(
+        CancellationToken cancellationToken,
+        IChatCompletion chat,
+        ChatHistory answerChat,
+        StringBuilder errorBuilder,
+        string documentContents,
+        ChatTurn[] chatTurns)
     {
         var answer = await chat.GetChatCompletionsAsync(
             answerChat,
@@ -151,17 +220,37 @@ public class ReadRetrieveReadChatService
 
         // Extract the answer and thoughts from the result  
         var answerJson = answer[0].ModelResult.GetOpenAIChatResult().Choice.Message.Content;
-        var answerObject = JsonSerializer.Deserialize<JsonElement>(answerJson);
+        JsonElement answerObject;
+        try
+        {
+            answerObject = JsonSerializer.Deserialize<JsonElement>(answerJson);
+        }
+        catch (Exception e)
+        {
+            errorBuilder.AppendLine($"Failed to deserialize answer {answerJson}, one more try to update it");
+            _logger.LogError(e, "Failed to deserialize answer");
+
+            answerChat = CreateAnswerChat2(chatTurns, chat, documentContents);
+
+            answer = await chat.GetChatCompletionsAsync(
+                answerChat,
+                cancellationToken: cancellationToken);
+
+            // Extract the answer and thoughts from the result  
+            answerJson = answer[0].ModelResult.GetOpenAIChatResult().Choice.Message.Content;
+
+            answerObject = JsonSerializer.Deserialize<JsonElement>(answerJson);
+        }
 
         var ans = answerObject.GetProperty("answer").GetString() ?? throw new InvalidOperationException("Failed to get answer");
         var thoughts = answerObject.GetProperty("thoughts").GetString() ?? throw new InvalidOperationException("Failed to get thoughts");
         return (ans, thoughts);
     }
 
-    private ChatHistory CreateAnswerChat(ChatTurn[] history, IChatCompletion chat, string documentContents)
+    private ChatHistory CreateAnswerChat2(ChatTurn[] history, IChatCompletion chat, string documentContents)
     {
-        var createAnswerPrompt = PromptFileService.ReadPromptsFromFile("create-answer.txt");
-        _logger.LogInformation("create-answer: {x}", createAnswerPrompt);
+        var createAnswerPrompt = PromptFileService.ReadPromptsFromFile("create-json-prompt-2.txt");
+        _logger.LogInformation("create-answer-2: {x}", createAnswerPrompt);
 
         var answerChat = chat.CreateNewChat(createAnswerPrompt);
 
@@ -185,6 +274,44 @@ public class ReadRetrieveReadChatService
         // Add the document contents and the answer format to the chat  
         answerChat.AddUserMessage(createJsonPrompt);
         return answerChat;
+    }
+
+    private ChatHistory CreateAnswerChat(ChatTurn[] history, IChatCompletion chat, string documentContents, StringBuilder stringBuilder)
+    {
+        var createAnswerPrompt = PromptFileService.ReadPromptsFromFile(PromptFileNames.CreateAnswer);
+        _logger.LogInformation("create-answer: {x}", createAnswerPrompt);
+
+        var answerChat = chat.CreateNewChat(createAnswerPrompt);
+        try
+        {
+            // add chat history
+            foreach (var turn in history)
+            {
+                answerChat.AddUserMessage(turn.User);
+                if (turn.Bot is { } botMessage)
+                {
+                    answerChat.AddAssistantMessage(botMessage);
+                    _logger.LogInformation("history: {x}", botMessage);
+                }
+            }
+
+            var createJsonPrompt = PromptFileService.ReadPromptsFromFile("create-json-prompt.txt", new Dictionary<string, string>
+            {
+                { "{documentContents}", documentContents }
+            });
+            _logger.LogInformation("create-json-prompt: {x}", createJsonPrompt);
+            // format prompt
+            // Add the document contents and the answer format to the chat  
+            answerChat.AddUserMessage(createJsonPrompt);
+            return answerChat;
+        }
+        catch (Exception e)
+        {
+            var message = $"Failed to create answer chat {e.Message}";
+            stringBuilder.AppendLine(message);
+            _logger.LogError(e, message);
+            return answerChat;
+        }
     }
 
     private string GetDocumentContents(SupportingContentRecord[] documentContentList)
@@ -252,4 +379,14 @@ public class ReadRetrieveReadChatService
             : throw new InvalidOperationException("Use question is null");
         return question;
     }
+}
+
+public static class PromptFileNames
+{
+    public static string CreateAnswer { get; } = "create-answer.txt";
+    public static string CreateJsonPrompt { get; }  = "create-json-prompt.txt";
+    public static string SearchPrompt { get; }  = "search-prompt.txt";
+    public static string SystemFollowUp { get;  }  = "system-follow-up.txt";
+    public static string SystemFollowUpContent { get;  } = "system-follow-up-content.txt";
+    public static string CreateJsonPrompt2 { get; } = "create-json-prompt-2.txt";
 }

@@ -18,6 +18,8 @@ public class SupportingContentRecord
  
 public class ApproachResponse  
 {
+    private string _error;
+
     public ApproachResponse()
     {
         Answer = string.Empty;
@@ -27,6 +29,12 @@ public class ApproachResponse
         Questions = Array.Empty<string?>();
         Error = string.Empty;
     }
+
+    public ApproachResponse(string error)
+    {
+        _error = error;
+    }
+
     public ApproachResponse(string answer, string? thoughts, SupportingContentRecord[] dataPoints, string citationBaseUrl, string[] questions, string? error = null)  
     {  
         Answer = answer;  
