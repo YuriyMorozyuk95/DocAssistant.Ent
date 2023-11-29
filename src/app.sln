@@ -28,6 +28,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrepareDocs", "prepdocs\Pre
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmbedFunctions", "functions\EmbedFunctions\EmbedFunctions.csproj", "{54099AF3-CFA8-4EA9-9118-A26E3E63745B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DocAssistant.Data", "DocAssistant.Data\DocAssistant.Data.csproj", "{76A6F33C-EF5B-4B4E-8D3A-89C8CD8650F1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,6 +60,10 @@ Global
 		{54099AF3-CFA8-4EA9-9118-A26E3E63745B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{54099AF3-CFA8-4EA9-9118-A26E3E63745B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{54099AF3-CFA8-4EA9-9118-A26E3E63745B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76A6F33C-EF5B-4B4E-8D3A-89C8CD8650F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76A6F33C-EF5B-4B4E-8D3A-89C8CD8650F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76A6F33C-EF5B-4B4E-8D3A-89C8CD8650F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76A6F33C-EF5B-4B4E-8D3A-89C8CD8650F1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

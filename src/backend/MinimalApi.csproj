@@ -47,6 +47,7 @@
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
     <PackageReference Include="Microsoft.ML" />
     <PackageReference Include="Microsoft.SemanticKernel" />
@@ -56,6 +57,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DocAssistant.Data\DocAssistant.Data.csproj" />
     <ProjectReference Include="..\frontend\ClientApp.csproj" />
     <ProjectReference Include="..\shared\Shared\Shared.csproj" />
   </ItemGroup>
