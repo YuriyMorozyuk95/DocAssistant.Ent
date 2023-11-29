@@ -16,4 +16,12 @@ internal static class StringExtensions
 
         return builder.Uri.AbsoluteUri;
     }
+
+    internal static string ToOriginCitationUrl(this string originUrl)
+    {
+        var builder = new UriBuilder(originUrl);
+        builder.Fragment = "view-fitV";
+
+        return builder.Uri.AbsoluteUri;
+    }
 }

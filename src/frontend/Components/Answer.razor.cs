@@ -14,7 +14,7 @@ public sealed partial class Answer
     protected override void OnParametersSet()
     {
         _parsedAnswer = ParseAnswerToHtml(
-            Retort.Answer, Retort.CitationBaseUrl);
+            Retort.Answer, Retort.CitationBaseUrl, Retort.DataPoints);
 
         base.OnParametersSet();
     }
@@ -33,6 +33,7 @@ public sealed partial class Answer
             {
                 [nameof(PdfViewerDialog.FileName)] = citation.Name,
                 [nameof(PdfViewerDialog.BaseUrl)] = citation.BaseUrl,
+                [nameof(PdfViewerDialog.OriginUri)] = citation.OriginUri,
             },
             new DialogOptions
             {

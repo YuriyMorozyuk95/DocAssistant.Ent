@@ -19,7 +19,7 @@ public interface IAzureSearchEmbedService
     /// An asynchronous operation that yields <c>true</c>
     /// when successfully embedded, otherwise <c>false</c>.
     /// </returns>
-    Task<bool> EmbedBlob(Stream blobStream, string blobName, string searchIndexName, string embeddingModelName);
+    Task<bool> EmbedBlob(Stream blobStream, string blobName, string searchIndexName, string embeddingModelName, Uri originDocUrl);
 
     Task CreateSearchIndex(string searchIndexName);
     Task EnsureSearchIndex(string searchIndexName);
@@ -53,7 +53,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
     [GeneratedRegex("[^0-9a-zA-Z_-]")]
     private static partial Regex MatchInSetRegex();
 
-    public async Task<bool> EmbedBlob(Stream blobStream, string blobName, string searchIndexName, string embeddingModelName)
+    public async Task<bool> EmbedBlob(Stream blobStream, string blobName, string searchIndexName, string embeddingModelName, Uri originDocUrl)
     {
         try
         {
@@ -68,10 +68,10 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
             foreach (var page in pageMap)
             {
                 var corpusName = $"{fileNameWithoutExtension}-{page.Index}.txt";
-                await UploadCorpusAsync(corpusName, page.Text);
+                await UploadCorpusAsync(corpusName, page.Text, originDocUrl);
             }
 
-            var sections = CreateSections(pageMap, blobName);
+            var sections = CreateSections(pageMap, blobName, originDocUrl.ToString());
 
             await IndexSectionsAsync(searchIndexName, sections, blobName, embeddingModelName);
 
@@ -266,7 +266,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
         return tableHtml.ToString();
     }
 
-    private async Task UploadCorpusAsync(string corpusBlobName, string text)
+    private async Task UploadCorpusAsync(string corpusBlobName, string text, Uri originUri)
     {
         var container = await _storageService.GetOutputBlobContainerClient();
         var blobClient = container.GetBlobClient(corpusBlobName);
@@ -282,10 +282,18 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
         {
             ContentType = "text/plain"
         });
+
+        // Set the metadata  
+        var metadata = new Dictionary<string, string>  
+        {  
+            {"OriginUri", originUri.ToString()}  
+        };  
+  
+        await blobClient.SetMetadataAsync(metadata);
     }
 
     private IEnumerable<Section> CreateSections(
-        IReadOnlyList<PageDetail> pageMap, string blobName)
+        IReadOnlyList<PageDetail> pageMap, string blobName, string sourceFileUri)
     {
         const int maxSectionLength = 1_000;
         const int sentenceSearchLimit = 100;
@@ -359,7 +367,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
                 Id: MatchInSetRegex().Replace($"{blobName}-{start}", "_").TrimStart('_'),
                 Content: sectionText,
                 SourcePage: BlobNameFromFilePage(blobName, FindPage(pageMap, start)),
-                SourceFile: blobName);
+                SourceFile: sourceFileUri);
 
             var lastTableStart = sectionText.LastIndexOf("<table", StringComparison.Ordinal);
             if (lastTableStart > 2 * sentenceSearchLimit && lastTableStart > sectionText.LastIndexOf("</table", StringComparison.Ordinal))
@@ -392,7 +400,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
                 Id: MatchInSetRegex().Replace($"{blobName}-{start}", "_").TrimStart('_'),
                 Content: allText[start..end],
                 SourcePage: BlobNameFromFilePage(blobName, FindPage(pageMap, start)),
-                SourceFile: blobName);
+                SourceFile: sourceFileUri);
         }
     }
 

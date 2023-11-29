@@ -91,11 +91,12 @@ internal static class SearchClientExtensions
             {
                 contentValue = null;
             }
-
+            doc.Document.TryGetValue("sourcefile", out var sourceFileValue);
             if (sourcePageValue is string sourcePage && contentValue is string content)
             {
                 content = content.Replace('\r', ' ').Replace('\n', ' ');
-                sb.Add(new SupportingContentRecord(sourcePage,content));
+
+                sb.Add(new SupportingContentRecord(sourcePage, content, sourceFileValue as string));
             }
         }
 

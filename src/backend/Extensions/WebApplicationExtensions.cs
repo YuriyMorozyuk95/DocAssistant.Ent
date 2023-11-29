@@ -115,7 +115,7 @@ internal static class WebApplicationExtensions
         [FromServices] IUploaderDocumentService service,
         CancellationToken cancellationToken)
     {
-        await service.UploadToAzureIndex(cancellationToken);
+        await service.UploadToAzureIndex();
         return TypedResults.Ok();
     }
 }
