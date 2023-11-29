@@ -1,9 +1,5 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using ClientApp.Components;
-
-using Microsoft.Identity.Client;
-
 namespace MinimalApi.Services;
 
 public class ReadRetrieveReadChatService
@@ -174,7 +170,7 @@ public class ReadRetrieveReadChatService
     {
         var answerWithFollowUpQuestion = new string(answer);
 
-        var systemFollowUp = PromptFileService.ReadPromptsFromFile("system-follow-up.txt");
+        var systemFollowUp = PromptFileService.ReadPromptsFromFile(PromptFileNames.SystemFollowUp);
         var systemFollowContent = PromptFileService.ReadPromptsFromFile("system-follow-up-content.txt", new Dictionary<string, string>
         {
             { "{answer}", answer }
@@ -249,7 +245,7 @@ public class ReadRetrieveReadChatService
 
     private ChatHistory CreateAnswerChat2(ChatTurn[] history, IChatCompletion chat, string documentContents)
     {
-        var createAnswerPrompt = PromptFileService.ReadPromptsFromFile("create-json-prompt-2.txt");
+        var createAnswerPrompt = PromptFileService.ReadPromptsFromFile(PromptFileNames.CreateJsonPrompt2);
         _logger.LogInformation("create-answer-2: {x}", createAnswerPrompt);
 
         var answerChat = chat.CreateNewChat(createAnswerPrompt);
@@ -265,7 +261,7 @@ public class ReadRetrieveReadChatService
             }
         }
 
-        var createJsonPrompt = PromptFileService.ReadPromptsFromFile("create-json-prompt.txt", new Dictionary<string, string>
+        var createJsonPrompt = PromptFileService.ReadPromptsFromFile(PromptFileNames.CreateJsonPrompt, new Dictionary<string, string>
         {
             { "{documentContents}", documentContents }
         });
@@ -295,7 +291,7 @@ public class ReadRetrieveReadChatService
                 }
             }
 
-            var createJsonPrompt = PromptFileService.ReadPromptsFromFile("create-json-prompt.txt", new Dictionary<string, string>
+            var createJsonPrompt = PromptFileService.ReadPromptsFromFile(PromptFileNames.CreateJsonPrompt, new Dictionary<string, string>
             {
                 { "{documentContents}", documentContents }
             });
@@ -335,7 +331,7 @@ public class ReadRetrieveReadChatService
         string query = null;
         if (overrides?.RetrievalMode != "Vector")
         {
-            var searchPrompt = PromptFileService.ReadPromptsFromFile("search-prompt.txt");
+            var searchPrompt = PromptFileService.ReadPromptsFromFile(PromptFileNames.SearchPrompt);
             // Create a new chat to generate the search query  
             var getQueryChat = chat.CreateNewChat(searchPrompt);
 

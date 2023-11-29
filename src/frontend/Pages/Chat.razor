@@ -108,20 +108,4 @@
         <MudFab Color="Color.Primary" IconSize="Size.Large" StartIcon="@Icons.Material.Filled.ArrowUpward" />
     </MudScrollToTop>
 
-    <MudItem xs="12" lg="5">  
-        <MudTextField Lines="4" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.SearchPrompt" Label="Search Prompt" Multiline="true" />
-
-        <MudTextField Lines="4" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.CreateAnswer" Label="Create Answer" Multiline="true" />
-
-        <MudTextField Lines="4" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true"  @bind-Value="CopilotPrompts.CreateJsonPrompt" Label="Create Json Prompt" Multiline="true" />
-
-        <MudTextField Lines="4" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.SystemFollowUp" Label="System Follow Up" Multiline="true" />
-
-        <MudTextField Lines="4" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.SystemFollowUpContent" Label="System Follow Up Content" Multiline="true" />
-
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@OnPostCopilotPromptsClickedAsync">  
-            Update  
-        </MudButton>  
-    </MudItem>
-
 </MudGrid>

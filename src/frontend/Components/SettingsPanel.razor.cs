@@ -9,6 +9,9 @@ public sealed partial class SettingsPanel : IDisposable
 
     [Inject] public required NavigationManager Nav { get; set; }
 
+    [Parameter]
+    public required CopilotPromptsRequestResponse CopilotPrompts { get; set; } = new();  
+
     public RequestSettingsOverrides Settings { get; } = new();
 
     [Parameter]
@@ -30,6 +33,7 @@ public sealed partial class SettingsPanel : IDisposable
     }
 
     [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public EventCallback<bool> UpdateButtonClicked { get; set; }
 
     protected override void OnInitialized() => Nav.LocationChanged += HandleLocationChanged;
 
@@ -46,6 +50,14 @@ public sealed partial class SettingsPanel : IDisposable
     }
 
     public void Dispose() => Nav.LocationChanged -= HandleLocationChanged;
+
+    private async Task OnClickBroadcastAsync()
+    {
+        if (UpdateButtonClicked.HasDelegate)
+        {
+            await UpdateButtonClicked.InvokeAsync();
+        }
+    }
 }
 
 public enum SupportedSettings

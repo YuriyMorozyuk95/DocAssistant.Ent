@@ -62,7 +62,7 @@
                     </CascadingValue>
                 </CascadingValue>
             </MudContainer>
-            <SettingsPanel @ref="_settingsPanel" @bind-Open="@_settingsOpen" />
+            <SettingsPanel @ref="_settingsPanel" @bind-Open="@_settingsOpen" CopilotPrompts="@CopilotPrompts" UpdateButtonClicked="@OnUpdateButtonClickedAsync" />
         </MudMainContent>
     </MudLayout>
 </MudRTLProvider>

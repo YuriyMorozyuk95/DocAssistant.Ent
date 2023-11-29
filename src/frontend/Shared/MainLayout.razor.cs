@@ -8,6 +8,9 @@ public sealed partial class MainLayout
     private bool _drawerOpen = true;
     private bool _settingsOpen = false;
     private SettingsPanel? _settingsPanel;
+    private bool _isLoadingPromptsInit;
+
+    private Task _copilotPromptsInitializing;
 
     private bool _isDarkTheme
     {
@@ -27,6 +30,7 @@ public sealed partial class MainLayout
     [Inject] public required NavigationManager Nav { get; set; }
     [Inject] public required ILocalStorageService LocalStorage { get; set; }
     [Inject] public required IDialogService Dialog { get; set; }
+    [Inject] public required ApiClient ApiClient { get; set; }
 
     private bool SettingsDisabled => new Uri(Nav.Uri).Segments.LastOrDefault() switch
     {
@@ -40,9 +44,38 @@ public sealed partial class MainLayout
         _ => true
     };
 
+    public CopilotPromptsRequestResponse CopilotPrompts { get; set; } = new();
+
     private void OnMenuClicked() => _drawerOpen = !_drawerOpen;
 
     private void OnThemeChanged() => _isDarkTheme = !_isDarkTheme;
 
     private void OnIsReversedChanged() => _isReversed = !_isReversed;
+
+    protected override void OnInitialized()
+    {
+        // Instead of awaiting this async enumerable here, let's capture it in a task
+        // and start it in the background. This way, we can await it in the UI.
+        _copilotPromptsInitializing = OnCopilotPromptsInitializingAsync();
+    }
+
+    private async Task OnUpdateButtonClickedAsync()
+    {
+        await ApiClient.PostCopilotPromptsServerDataAsync(CopilotPrompts);
+    }
+
+    private async Task OnCopilotPromptsInitializingAsync()
+    {
+        _isLoadingPromptsInit = true;
+
+        try
+        {
+            CopilotPrompts = await ApiClient.GetCopilotPromptsAsync();
+        }
+        finally
+        {
+            _isLoadingPromptsInit = false;
+            StateHasChanged();
+        }
+    }
 }

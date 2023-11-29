@@ -29,7 +29,7 @@ public sealed partial class Chat
     public required RequestSettingsOverrides Settings { get; set; }
 
     [CascadingParameter(Name = nameof(CopilotPrompts))]
-    public required CopilotPromptsRequestResponse CopilotPrompts { get; set; } = new CopilotPromptsRequestResponse();  
+    public required CopilotPromptsRequestResponse CopilotPrompts { get; set; } = new();  
 
     [CascadingParameter(Name = nameof(IsReversed))]
     public required bool IsReversed { get; set; }
@@ -92,11 +92,6 @@ public sealed partial class Chat
         _questionAndAnswerMap.Clear();
     }
 
-    private async Task OnPostCopilotPromptsClickedAsync()
-    {
-        await ApiClient.PostCopilotPromptsServerDataAsync(CopilotPrompts);
-    }
-
     private async Task OnCopilotPromptsInitializingAsync()
     {
         _isLoadingPromptsInit = true;
@@ -110,7 +105,6 @@ public sealed partial class Chat
             _isLoadingPromptsInit = false;
             StateHasChanged();
         }
-
     }
 
     private async Task OnExamplesPromptsInitialingAsync()
