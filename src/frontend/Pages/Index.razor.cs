@@ -1,6 +1,10 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using System.Net.NetworkInformation;
+
 using Microsoft.JSInterop;
+using global::Shared.TableEntities;
+using Shared.TableEntities;
 
 namespace ClientApp.Pages;
 
@@ -14,6 +18,7 @@ public sealed partial class Index : IDisposable
     private bool _isLoadingDocuments = false;
     private bool _isIndexUploading = false;
     private string _filter = "";
+    private List<PermissionEntity> _selectedPermissionsForDoc = new List<PermissionEntity>();  
 
     // Store a cancelation token that will be used to cancel if the user disposes of this component.
     private readonly CancellationTokenSource _cancellationTokenSource = new();

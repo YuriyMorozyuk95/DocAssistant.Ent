@@ -1,0 +1,23 @@
+﻿@using MudBlazor   
+@using Shared.TableEntities;  
+  
+<MudSelect T="@PermissionEntity"
+    Label="Select Permissions"
+    MultiSelection="true"
+    SelectedValues="SelectedItems"
+    SelectedValuesChanged="OnSelectedItemsChangedAsync">
+    @foreach (var item in _items)  
+    {
+        <MudSelectItem T="PermissionEntity" Value="@item">@item.Name</MudSelectItem>
+    }  
+</MudSelect>  
+  
+@* DEBUG *@
+@* <MudGrid Class="mt-6 px-4">  
+    <MudItem xs="6">  
+        <MudText Typo="Typo.subtitle2">Selected Values:</MudText>  
+        <MudText Typo="Typo.subtitle2">{</MudText>  
+        <MudText Typo="Typo.body2" Class="pl-4">@(string.Join(", ", SelectedItems.Select(x=>$"\"{x}\"")))</MudText>  
+        <MudText Typo="Typo.subtitle2">}</MudText>  
+    </MudItem>  
+</MudGrid> *@

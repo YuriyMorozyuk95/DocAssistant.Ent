@@ -7,4 +7,6 @@ public class PermissionEntity
     [JsonProperty("id")] public string Id { get; set; }
 
     public string Name { get; set; }
+
+    override public string ToString() => Name;
 }

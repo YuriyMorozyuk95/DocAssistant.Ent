@@ -19,7 +19,7 @@
                                    OnClick="@(async () => await SynchronizeDocumentsAsync())">
                             Synchronizing Index Documents
                         </MudButton>
-
+                        <PermissionMultiSelect @bind-SelectedItems="_selectedPermissionsForDoc" />
                     </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
