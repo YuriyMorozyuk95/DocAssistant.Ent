@@ -4,14 +4,14 @@ using Shared.TableEntities;
 
 namespace ClientApp.Services;
 
-public interface IPermissionApiClient  
+public interface PermissionApiClient  
 {  
     Task<IEnumerable<PermissionEntity>> GetAllPermissions();  
     Task DeletePermission(string permissionId);  
     Task SaveChanges(IEnumerable<PermissionEntity> permissions);  
 }  
   
-public class PermissionApiClient : IPermissionApiClient    
+public class PermissionApiClient : PermissionApiClient    
 {    
     private readonly HttpClient _httpClient;    
     
