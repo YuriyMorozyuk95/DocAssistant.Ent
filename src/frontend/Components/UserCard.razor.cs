@@ -19,8 +19,8 @@ public partial class UserCard
         //}
     }
 
-    public void NavigateToDetails(UserEntity selectedEmployee)
+    public void NavigateToDetails(UserEntity selectedUser)
     {
-        NavigationManager.NavigateTo($"/user-edit/{selectedEmployee.Id}");
+        NavigationManager.NavigateTo($"/user-edit/{selectedUser.Id}");
     }
 }

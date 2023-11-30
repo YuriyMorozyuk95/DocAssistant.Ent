@@ -10,13 +10,13 @@ public class MockUserService
     {
         get
         {
-            _users ??= InitializeMockEmployees();
+            _users ??= InitializeMockUsers();
 
             return _users;
         }
     }
 
-    private static List<UserEntity> InitializeMockEmployees()
+    private static List<UserEntity> InitializeMockUsers()
     {
         var e1 = new UserEntity
         {
@@ -56,31 +56,31 @@ public class MockUserService
     {
         return Task.Run(() => Users.AsEnumerable());
     }
-    public static Task<UserEntity> GetUserDetails(int employeeId)
+    public static Task<UserEntity> GetUserDetails(int userId)
     {
-        return Task.Run(() => Users.FirstOrDefault(e => e.Id == employeeId.ToString()));
+        return Task.Run(() => Users.FirstOrDefault(e => e.Id == userId.ToString()));
     }
-    public static Task UpdateUser(UserEntity employee)
+    public static Task UpdateUser(UserEntity user)
     {
         return Task.Run(() =>
         {
-            var employeeToUpdate = Users.FirstOrDefault(e => e.Id == employee.Id);
-            if (employeeToUpdate != null)
+            var userToUpdate = Users.FirstOrDefault(e => e.Id == user.Id);
+            if (userToUpdate != null)
             {
-                employeeToUpdate.FirstName = employee.FirstName;
-                employeeToUpdate.LastName = employee.LastName;
-                employeeToUpdate.Email = employee.Email;
+                userToUpdate.FirstName = user.FirstName;
+                userToUpdate.LastName = user.LastName;
+                userToUpdate.Email = user.Email;
             }
         });
     }
-    public static Task DeleteUser(string employeeId)
+    public static Task DeleteUser(string userId)
     {
         return Task.Run(() =>
         {
-            var employeeToDelete = Users.FirstOrDefault(e => e.Id == employeeId.ToString());
-            if (employeeToDelete != null)
+            var userToDelete = Users.FirstOrDefault(e => e.Id == userId.ToString());
+            if (userToDelete != null)
             {
-                Users.Remove(employeeToDelete);
+                Users.Remove(userToDelete);
             }
         });
     }

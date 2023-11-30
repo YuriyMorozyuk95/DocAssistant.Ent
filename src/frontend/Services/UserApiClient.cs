@@ -41,9 +41,9 @@ public class UserApiClient : IUserApiClient
         response.EnsureSuccessStatusCode();  
     }  
   
-    public async Task DeleteUser(string employeeId)  
+    public async Task DeleteUser(string userId)  
     {  
-        var response = await _httpClient.DeleteAsync($"api/users/{employeeId}");  
+        var response = await _httpClient.DeleteAsync($"api/users/{userId}");  
         response.EnsureSuccessStatusCode();  
     }  
 }  

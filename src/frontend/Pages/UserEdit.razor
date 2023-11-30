@@ -9,7 +9,7 @@
 
             <MudForm @ref="_form" Model="@User" OnValidSubmit="@HandleValidSubmitAsync">
 
-            @* @if (User.Id?.Length > 0)  
+            @* @if (-?.Length > 0)  
             {  
                 <MudFileInput Label="Select image: " OnChanged="OnInputFileChange" />  
                 @if (Employee.EmployeeId == 0)
@@ -28,11 +28,11 @@
             <MudTextField Label="First name: " @bind-Value="@User.FirstName" For="@(() => User.FirstName)" />  
             <MudTextField Label="Email: " @bind-Value="@User.Email" For="@(() => User.Email)" />
 
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-3 mr-2" OnClick="() => _form.Validate()">Save employee</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-3 mr-2" OnClick="() => _form.Validate()">Save user</MudButton>
 
             @if (User.Id?.Length > 0)  
             {
-                <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Secondary" Class="mt-3 mr-2" OnClick="@DeleteEmployeeAsync">
+                <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Secondary" Class="mt-3 mr-2" OnClick="@DeleteUserAsync">
                     Delete  
                 </MudButton>  
             }

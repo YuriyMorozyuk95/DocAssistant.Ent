@@ -8,9 +8,9 @@ internal static class UserManagementEndpointsExtensions
     {
         // User management endpoints  
         api.MapGet("users", OnGetAllUsersAsync);    
-        api.MapGet("users/{employeeId}", OnGetUserDetailsAsync);    
-        api.MapPut("users/{employeeId}", OnUpdateUserAsync);    
-        api.MapDelete("users/{employeeId}", OnDeleteUserAsync);  
+        api.MapGet("users/{userId}", OnGetUserDetailsAsync);    
+        api.MapPut("users/{userId}", OnUpdateUserAsync);    
+        api.MapDelete("users/{userId}", OnDeleteUserAsync);  
     }
 
     private static Task OnUpdateUserAsync(HttpContext context)

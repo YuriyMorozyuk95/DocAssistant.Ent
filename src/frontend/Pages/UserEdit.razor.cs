@@ -30,7 +30,7 @@ public partial class UserEdit
 
         int.TryParse(UserId, out var userId);
 
-        if (userId == 0) //new employee is being created  
+        if (userId == 0) //new user is being created  
         {
             //add some defaults  
             User = new UserEntity { };
@@ -53,17 +53,17 @@ public partial class UserEdit
 
         if (User.Id?.Length > 0) //new  
         {
-            var addedEmployee = await MockUserService.AddUser(User);
-            if (addedEmployee != null)
+            var addedUser = await MockUserService.AddUser(User);
+            if (addedUser != null)
             {
                 StatusClass = "alert-success";
-                Message = "New employee added successfully.";
+                Message = "New user added successfully.";
                 Saved = true;
             }
             else
             {
                 StatusClass = "alert-danger";
-                Message = "Something went wrong adding the new employee. Please try again.";
+                Message = "Something went wrong adding the new user. Please try again.";
                 Saved = false;
             }
         }
@@ -71,7 +71,7 @@ public partial class UserEdit
         {
             await MockUserService.UpdateUser(User);
             StatusClass = "alert-success";
-            Message = "Employee updated successfully.";
+            Message = "User updated successfully.";
             Saved = true;
         }
     }
@@ -82,7 +82,7 @@ public partial class UserEdit
         Message = "There are some validation errors. Please try again.";
     }
 
-    protected async Task DeleteEmployeeAsync()
+    protected async Task DeleteUserAsync()
     {
         await MockUserService.DeleteUser(User.Id);
 
