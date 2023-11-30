@@ -4,8 +4,14 @@ namespace ClientApp.Pages;
 
 public partial class UserEdit
 {
+    private MudForm _form;  
+
     [Inject]
     public NavigationManager NavigationManager { get; set; }
+
+    //TODO user instead of MockDataService
+    [Inject]
+    public UserApiClient UserApiClient { get; set; }
 
     [Parameter]
     public string? UserId { get; set; }
@@ -22,16 +28,16 @@ public partial class UserEdit
     {
         Saved = false;
 
-        int.TryParse(UserId, out var employeeId);
+        int.TryParse(UserId, out var userId);
 
-        if (employeeId == 0) //new employee is being created
+        if (userId == 0) //new employee is being created  
         {
-            //add some defaults
+            //add some defaults  
             User = new UserEntity { };
         }
         else
         {
-            User = await MockDataService.GetEmployeeDetails(int.Parse(UserId));
+            User = await MockDataService.GetUserDetails(int.Parse(UserId));
         }
     }
 
@@ -45,22 +51,9 @@ public partial class UserEdit
     {
         Saved = false;
 
-        if (User.Id?.Length > 0) //new
+        if (User.Id?.Length > 0) //new  
         {
-            //TODO image adding
-            //if (selectedFile != null)//take first image
-            //{
-            //    var file = selectedFile;
-            //    Stream stream = file.OpenReadStream();
-            //    MemoryStream ms = new();
-            //    await stream.CopyToAsync(ms);
-            //    stream.Close();
-
-            //    User.ImageName = file.Name;
-            //    User.ImageContent = ms.ToArray();
-            //}
-
-            var addedEmployee = await MockDataService.AddEmployee(User);
+            var addedEmployee = await MockDataService.AddUser(User);
             if (addedEmployee != null)
             {
                 StatusClass = "alert-success";
@@ -76,7 +69,7 @@ public partial class UserEdit
         }
         else
         {
-            await MockDataService.UpdateEmployee(User);
+            await MockDataService.UpdateUser(User);
             StatusClass = "alert-success";
             Message = "Employee updated successfully.";
             Saved = true;
@@ -91,7 +84,7 @@ public partial class UserEdit
 
     protected async Task DeleteEmployeeAsync()
     {
-        await MockDataService.DeleteEmployee(User.Id);
+        await MockDataService.DeleteUser(User.Id);
 
         StatusClass = "alert-success";
         Message = "Deleted successfully";
@@ -103,5 +96,4 @@ public partial class UserEdit
     {
         NavigationManager.NavigateTo("/users-page");
     }
-
 }

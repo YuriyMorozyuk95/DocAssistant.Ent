@@ -45,22 +45,22 @@ public class MockDataService
         return new List<UserEntity>() { e1, e2, e3 };
     }
 
-    public static Task<UserEntity> AddEmployee(UserEntity userEntity)
+    public static Task<UserEntity> AddUser(UserEntity userEntity)
     {
         Users.Add(userEntity);
 
         return Task.FromResult(userEntity);
     }
 
-    public static Task<IEnumerable<UserEntity>> GetAllEmployees(bool refreshRequired = false)
+    public static Task<IEnumerable<UserEntity>> GetAllUsers(bool refreshRequired = false)
     {
         return Task.Run(() => Users.AsEnumerable());
     }
-    public static Task<UserEntity> GetEmployeeDetails(int employeeId)
+    public static Task<UserEntity> GetUserDetails(int employeeId)
     {
         return Task.Run(() => Users.FirstOrDefault(e => e.Id == employeeId.ToString()));
     }
-    public static Task UpdateEmployee(UserEntity employee)
+    public static Task UpdateUser(UserEntity employee)
     {
         return Task.Run(() =>
         {
@@ -73,7 +73,7 @@ public class MockDataService
             }
         });
     }
-    public static Task DeleteEmployee(string employeeId)
+    public static Task DeleteUser(string employeeId)
     {
         return Task.Run(() =>
         {

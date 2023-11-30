@@ -1,74 +1,38 @@
-﻿@page "/user-edit"
-@page "/user-edit/{UserId}"
+﻿  
+@page "/user-edit"  
+@page "/user-edit/{UserId}"  
 
-@if (!Saved)
-{
-    <section class="user-edit">
+@if (!Saved)  
+{  
+    <MudPaper Class="p-6">  
+        <MudText Typo="Typo.h4">Details for @User.FirstName @User.LastName</MudText>
 
-        <h1 class="page-title">Details for @User.FirstName @User.LastName</h1>
+            <MudForm @ref="_form" Model="@User" OnValidSubmit="@HandleValidSubmitAsync">
 
-        <EditForm Model="@User" OnValidSubmit="@HandleValidSubmitAsync"
-              OnInvalidSubmit="@HandleInvalidSubmit">
+            @if (User.Id?.Length > 0)  
+            {  
+                <MudFileInput Label="Select image: " OnChanged="OnInputFileChange" />  
+            }  
+  
+            <MudTextField Label="Last name: " @bind-Value="@User.LastName" For="@(() => User.LastName)" />  
+            <MudTextField Label="First name: " @bind-Value="@User.FirstName" For="@(() => User.FirstName)" />  
+            <MudTextField Label="Email: " @bind-Value="@User.Email" For="@(() => User.Email)" />
 
-            <DataAnnotationsValidator />
-            <ValidationSummary></ValidationSummary>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-3 mr-2" OnClick="() => _form.Validate()">Save employee</MudButton>
 
-            @if (User.Id?.Length > 0)
+            @if (User.Id?.Length > 0)  
             {
-                <div class="row mb-3">
-                    <label for="image" class="col-12 col-sm-3">Select image: </label>
-                    <div class="col-md-8">
-                        <InputFile OnChange="OnInputFileChange" />
-                    </div>
-
-                </div>
+                <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Secondary" Class="mt-3 mr-2" OnClick="@DeleteEmployeeAsync">
+                    Delete  
+                </MudButton>  
             }
 
-            <div class="row mb-3">
-                <label for="lastName" class="col-form-label col-md-3">Last name: </label>
-                <div class="col-md-8">
-                    <InputText id="lastName" class="form-control col-md-8" @bind-Value="@User.LastName" placeholder="Enter last name"></InputText>
-                </div>
-                <ValidationMessage class="offset-md-3 col-md-8" For="@(() => User.LastName)" />
-            </div>
-
-            <div class="row mb-3">
-                <label for="firstName" class="col-form-label col-md-3">First name: </label>
-                <div class="col-md-8">
-                    <InputText id="firstName" class="form-control col-md-8" @bind-Value="@User.FirstName" placeholder="Enter first name"></InputText>
-                    <ValidationMessage class="offset-md-3 col-md-8" For="@(() => User.FirstName)" />
-                </div>
-
-            </div>
-
-
-            <div class="row mb-3">
-                <label for="email" class="col-form-label col-md-3">Email: </label>
-                <div class="col-md-8">
-                    <InputText id="email" class="form-control col-md-8" @bind-Value="@User.Email" placeholder="Enter email"></InputText>
-                    <ValidationMessage class="offset-md-3 col-md-8" For="@(() => User.Email)" />
-                </div>
-            </div>
-           
-
-            <button type="submit" class="btn btn-primary me-1">Save employee</button>
-
-            @if (User.Id?.Length > 0)
-            {
-                <button type="button" class="btn btn-danger my-1" @onclick="@DeleteEmployeeAsync">
-                    Delete
-                </button>
-            }
-
-            <button type="button" class="btn btn-outline-primary ms-1" @onclick="@NavigateToOverview">Back to overview</button>
-
-        </EditForm>
-
-
-    </section>
+            <MudButton ButtonType="ButtonType.Button" Variant="Variant.Outlined" Color="Color.Primary" Class="mt-3 mr-2" OnClick="@NavigateToOverview">Back to overview</MudButton>
+        </MudForm>
+    </MudPaper>
 }
 else
 {
-    <div class="alert @StatusClass">@Message</div>
-    <button type="button" class="btn btn-outline-primary" @onclick="@NavigateToOverview">Back to overview</button>
+    <MudAlert Severity="@(Saved ? Severity.Success : Severity.Error)" Variant="Variant.Filled">@Message</MudAlert>
+    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Outlined" Color="Color.Primary" Class="mt-3 mr-2" OnClick="@NavigateToOverview">Back to overview</MudButton>
 }
