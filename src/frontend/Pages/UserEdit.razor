@@ -9,10 +9,20 @@
 
             <MudForm @ref="_form" Model="@User" OnValidSubmit="@HandleValidSubmitAsync">
 
-            @if (User.Id?.Length > 0)  
+            @* @if (User.Id?.Length > 0)  
             {  
                 <MudFileInput Label="Select image: " OnChanged="OnInputFileChange" />  
-            }  
+                @if (Employee.EmployeeId == 0)
+                {
+                    <div class="row mb-3">
+                        <label for="image" class="col-12 col-sm-3">Select image: </label>
+                        <div class="col-md-8">
+                            <InputFile OnChange="OnInputFileChange" />
+                        </div>
+
+                    </div>
+                }
+            } *@  
   
             <MudTextField Label="Last name: " @bind-Value="@User.LastName" For="@(() => User.LastName)" />  
             <MudTextField Label="First name: " @bind-Value="@User.FirstName" For="@(() => User.FirstName)" />  

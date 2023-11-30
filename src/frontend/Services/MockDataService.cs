@@ -2,7 +2,7 @@
 
 using Shared.TableEntities;
 
-public class MockDataService
+public class MockUserService
 {
     private static List<UserEntity>? _users = default!;
 

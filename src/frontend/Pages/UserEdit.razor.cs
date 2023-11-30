@@ -37,7 +37,7 @@ public partial class UserEdit
         }
         else
         {
-            User = await MockDataService.GetUserDetails(int.Parse(UserId));
+            User = await MockUserService.GetUserDetails(int.Parse(UserId));
         }
     }
 
@@ -53,7 +53,7 @@ public partial class UserEdit
 
         if (User.Id?.Length > 0) //new  
         {
-            var addedEmployee = await MockDataService.AddUser(User);
+            var addedEmployee = await MockUserService.AddUser(User);
             if (addedEmployee != null)
             {
                 StatusClass = "alert-success";
@@ -69,7 +69,7 @@ public partial class UserEdit
         }
         else
         {
-            await MockDataService.UpdateUser(User);
+            await MockUserService.UpdateUser(User);
             StatusClass = "alert-success";
             Message = "Employee updated successfully.";
             Saved = true;
@@ -84,7 +84,7 @@ public partial class UserEdit
 
     protected async Task DeleteEmployeeAsync()
     {
-        await MockDataService.DeleteUser(User.Id);
+        await MockUserService.DeleteUser(User.Id);
 
         StatusClass = "alert-success";
         Message = "Deleted successfully";

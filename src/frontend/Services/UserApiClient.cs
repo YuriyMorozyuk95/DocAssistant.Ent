@@ -6,10 +6,10 @@ namespace ClientApp.Services;
 
 public interface IUserApiClient
 {
-    Task<IEnumerable<UserEntity>> GetAllUsers(bool refreshRequired = false);
-    Task<UserEntity> GetUserDetails(int employeeId);
-    Task UpdateUser(UserEntity employee);
-    Task DeleteUser(string employeeId);
+    Task<IEnumerable<UserEntity>> GetAllUsers();
+    Task<UserEntity> GetUserDetails(int userId);
+    Task UpdateUser(UserEntity user);
+    Task DeleteUser(string userId);
 }
 
 public class UserApiClient : IUserApiClient  
@@ -21,29 +21,23 @@ public class UserApiClient : IUserApiClient
         _httpClient = httpClient;  
     }  
   
-    public async Task<IEnumerable<UserEntity>> GetAllUsers(bool refreshRequired = false)  
-    {  
-        if (refreshRequired)  
-        {  
-            var response = await _httpClient.GetAsync("api/users/refresh");  
-            response.EnsureSuccessStatusCode();  
-        }  
-  
+    public async Task<IEnumerable<UserEntity>> GetAllUsers()  
+    {
         var usersResponse = await _httpClient.GetAsync("api/users");  
         usersResponse.EnsureSuccessStatusCode();  
         return await usersResponse.Content.ReadFromJsonAsync<IEnumerable<UserEntity>>();  
     }  
   
-    public async Task<UserEntity> GetUserDetails(int employeeId)  
+    public async Task<UserEntity> GetUserDetails(int userId)  
     {  
-        var response = await _httpClient.GetAsync($"api/users/{employeeId}");  
+        var response = await _httpClient.GetAsync($"api/users/{userId}");  
         response.EnsureSuccessStatusCode();  
         return await response.Content.ReadFromJsonAsync<UserEntity>();  
     }  
   
-    public async Task UpdateUser(UserEntity employee)  
+    public async Task UpdateUser(UserEntity user)  
     {  
-        var response = await _httpClient.PutAsJsonAsync($"api/users/{employee.Id}", employee);  
+        var response = await _httpClient.PutAsJsonAsync($"api/users/{user.Id}", user);  
         response.EnsureSuccessStatusCode();  
     }  
   

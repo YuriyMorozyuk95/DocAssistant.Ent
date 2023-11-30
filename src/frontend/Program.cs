@@ -9,13 +9,17 @@ builder.Services.Configure<AppSettings>(
     builder.Configuration.GetSection(nameof(AppSettings)));
 builder.Services.AddHttpClient<ApiClient>(client =>
 {
-    //var baseUrl = builder.HostEnvironment.BaseAddress;
     var baseUrl = builder.Configuration["AppSettings:BACKEND_URI"];
     client.BaseAddress = new Uri(baseUrl);
 });
 builder.Services.AddHttpClient<UserApiClient>(client =>
 {
-    //var baseUrl = builder.HostEnvironment.BaseAddress;
+    var baseUrl = builder.Configuration["AppSettings:BACKEND_URI"];
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+builder.Services.AddHttpClient<PermissionApiClient>(client =>
+{
     var baseUrl = builder.Configuration["AppSettings:BACKEND_URI"];
     client.BaseAddress = new Uri(baseUrl);
 });
