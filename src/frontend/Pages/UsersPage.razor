@@ -1,0 +1,27 @@
+﻿@page "/users-page"  
+  
+<PageTitle>@Title</PageTitle>  
+  
+<HeadContent>  
+    <meta name="description" content="@Description">  
+</HeadContent>  
+  
+<h2>User Overview</h2>  
+  
+@if (Users == null)  
+{  
+    <p><em>Loading...</em></p>  
+}  
+else  
+{  
+    <MudGrid Spacing="3" Justify="Justify.Center">  
+        @foreach (var user in Users)  
+        {
+            <MudItem>
+                <MudPaper Class="p-3">
+                    <UserCard User="user"></UserCard>
+                </MudPaper>  
+            </MudItem>  
+        }  
+    </MudGrid>  
+}

@@ -1,7 +1,6 @@
-﻿using Microsoft.Azure.Cosmos;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
-namespace DocAssistant.Data.TableEntities;
+namespace Shared.TableEntities;
 public class UserEntity
 {
     [JsonProperty("id")] public string Id { get; set; }
@@ -12,5 +11,5 @@ public class UserEntity
     public string PasswordHash { get; set; }
     public int AccountId { get; set; }
     public bool IsAdmin { get; set; } = false;
-    public IEnumerable<Permission> Permissions { get; set; }
+    public IEnumerable<PermissionEntity> Permissions { get; set; }
 }

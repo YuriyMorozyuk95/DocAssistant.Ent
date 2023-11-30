@@ -25,8 +25,10 @@ internal static class WebApplicationExtensions
 
         api.MapGet("copilot-prompts", OnGetCopilotPrompts);  
   
-        api.MapPost("copilot-prompts", OnPostCopilotPromptsAsync);  
+        api.MapPost("copilot-prompts", OnPostCopilotPromptsAsync);
 
+        api.MapUserManagementApi();
+        api.MapPermissionManagementApi();
 
         return app;
     }
