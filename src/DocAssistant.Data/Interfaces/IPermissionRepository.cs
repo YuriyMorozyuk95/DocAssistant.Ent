@@ -1,6 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using DocAssistant.Data.TableEntities;
+using Shared.TableEntities;
 
 namespace DocAssistant.Data.Interfaces;
 public interface IPermissionRepository

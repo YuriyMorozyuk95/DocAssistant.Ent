@@ -11,4 +11,8 @@
     <PackageReference Include="Microsoft.Azure.Cosmos.Table" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\shared\Shared\Shared.csproj" />
+  </ItemGroup>
+
 </Project>

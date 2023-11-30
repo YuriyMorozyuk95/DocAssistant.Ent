@@ -1,4 +1,4 @@
-﻿namespace DocAssistant.Data.TableEntities;
+﻿namespace Shared.TableEntities;
 public enum Rights
 {
     Read,

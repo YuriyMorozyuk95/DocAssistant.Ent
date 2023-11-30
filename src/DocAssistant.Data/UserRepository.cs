@@ -1,6 +1,6 @@
 ﻿using DocAssistant.Data.Interfaces;
-using DocAssistant.Data.TableEntities;
 using Microsoft.Azure.Cosmos;
+using Shared.TableEntities;
 
 namespace DocAssistant.Data;
 
