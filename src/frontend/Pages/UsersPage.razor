@@ -1,33 +1,27 @@
-﻿@page "/users-page"
-
-<PageTitle>@Title</PageTitle>
-
-<HeadContent>
-    <meta name="description" content="@Description">
-</HeadContent>
-
-<h2>Employee Overview</h2>
-
-    @if (Users == null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <div class="row">
-        @foreach (var user in Users)
+﻿@page "/users-page"  
+  
+<PageTitle>@Title</PageTitle>  
+  
+<HeadContent>  
+    <meta name="description" content="@Description">  
+</HeadContent>  
+  
+<h2>Employee Overview</h2>  
+  
+@if (Users == null)  
+{  
+    <p><em>Loading...</em></p>  
+}  
+else  
+{  
+    <MudGrid Spacing="3" Justify="Justify.Center">  
+        @foreach (var user in Users)  
         {
-            <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-3 col-xxl-2">
-               @*  <ErrorBoundary>
-                    <ChildContent> *@
-                <UserCard User="user"></UserCard>
-                   @*  </ChildContent>
-                    <ErrorContent>
-                        <p class="errorUI">Invalid employee!</p>
-                    </ErrorContent>
-                </ErrorBoundary> *@
-            </div>
-            
-        }
-    </div>
+            <MudItem>
+                <MudPaper Class="p-3">
+                    <UserCard User="user"></UserCard>
+                </MudPaper>  
+            </MudItem>  
+        }  
+    </MudGrid>  
 }

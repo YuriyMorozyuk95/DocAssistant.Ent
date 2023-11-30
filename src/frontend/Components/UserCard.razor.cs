@@ -21,6 +21,6 @@ public partial class UserCard
 
     public void NavigateToDetails(UserEntity selectedEmployee)
     {
-        NavigationManager.NavigateTo($"/user-detail/{selectedEmployee.Id}");
+        NavigationManager.NavigateTo($"/user-edit/{selectedEmployee.Id}");
     }
 }

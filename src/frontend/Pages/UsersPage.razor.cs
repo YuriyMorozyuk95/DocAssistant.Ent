@@ -12,6 +12,6 @@ public sealed partial class UsersPage
 
     protected override void OnInitialized()
     {
-        Users = MockDataService.Employees;
+        Users = MockDataService.Users;
     }
 }

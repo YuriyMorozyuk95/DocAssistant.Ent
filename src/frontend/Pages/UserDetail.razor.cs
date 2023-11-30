@@ -12,7 +12,7 @@ namespace ClientApp.Pages;
 
         protected override Task OnInitializedAsync()
         {
-            User = MockDataService.Employees.FirstOrDefault(e => e.Id == Id);
+            User = MockDataService.Users.FirstOrDefault(e => e.Id == Id);
 
             return base.OnInitializedAsync();
         }
