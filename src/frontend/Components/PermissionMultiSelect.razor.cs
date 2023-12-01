@@ -10,6 +10,10 @@ public sealed partial class PermissionMultiSelect
     public List<PermissionEntity> SelectedItems { get; set; } = new List<PermissionEntity>();
     [Parameter]  
     public EventCallback<List<PermissionEntity>> SelectedItemsChanged { get; set; }
+    [Parameter]  
+    public string Label { get; set; }
+    [Parameter]  
+    public bool IsEnabled { get; set; }  
 
     public Type PermissionEntityType { get; set; } = typeof(PermissionEntity);
     private List<PermissionEntity> _items;

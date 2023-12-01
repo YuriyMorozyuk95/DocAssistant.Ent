@@ -1,9 +1,5 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using System.Net.NetworkInformation;
-
-using Microsoft.JSInterop;
-using global::Shared.TableEntities;
 using Shared.TableEntities;
 
 namespace ClientApp.Pages;
@@ -98,6 +94,7 @@ public sealed partial class Index : IDisposable
                     });
 
                 await _fileUpload.ResetAsync();
+                _selectedPermissionsForDoc.Clear();
                 await GetDocumentsAsync();
             }
             else

@@ -1,5 +1,4 @@
-﻿@* @page "/documents" *@
-@page "/"
+﻿@page "/"
 
 <PageTitle>Documents</PageTitle>
 
@@ -19,7 +18,6 @@
                                    OnClick="@(async () => await SynchronizeDocumentsAsync())">
                             Synchronizing Index Documents
                         </MudButton>
-                        <PermissionMultiSelect @bind-SelectedItems="_selectedPermissionsForDoc" />
                     </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
@@ -38,6 +36,9 @@
                                        for="@context">
                                 Select PDF Documents
                             </MudButton>
+                            <PermissionMultiSelect Label="Setup permissions for document(s)"
+                                                   IsEnabled=@FilesSelected
+                                                   @bind-SelectedItems="_selectedPermissionsForDoc" />
                         </ButtonTemplate>
                         <SelectedTemplate>
                             <MudExpansionPanels Class="pt-4" Elevation=2>
