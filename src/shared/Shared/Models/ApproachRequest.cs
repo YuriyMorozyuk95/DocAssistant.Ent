@@ -2,4 +2,13 @@
 
 namespace Shared.Models;
 
-public record class ApproachRequest(Approach Approach);
+public class ApproachRequest
+{
+    public Approach Approach { get; set; }
+
+    public ApproachRequest(Approach approach)
+    {
+        Approach = approach;
+    }
+}
+

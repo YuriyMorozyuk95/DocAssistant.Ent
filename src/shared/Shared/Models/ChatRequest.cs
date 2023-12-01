@@ -2,10 +2,26 @@
 
 namespace Shared.Models;
 
-public record class ChatRequest(
-    ChatTurn[] History,
-    Approach Approach,
-    RequestOverrides? Overrides = null) : ApproachRequest(Approach)
+public class ChatRequest : ApproachRequest
 {
-    public string? LastUserQuestion => History?.LastOrDefault()?.User;
+    public ChatTurn[] History { get; set; }
+    public Approach Approach { get; set; }
+    public SearchParameters? Overrides { get; set; }
+
+    public ChatRequest(ChatTurn[] history, Approach approach, SearchParameters? overrides = null)
+        : base(approach)
+    {
+        History = history;
+        Approach = approach;
+        Overrides = overrides;
+    }
+
+    public string? LastUserQuestion
+    {
+        get
+        {
+            return History?.LastOrDefault()?.User;
+        }
+    }
 }
+

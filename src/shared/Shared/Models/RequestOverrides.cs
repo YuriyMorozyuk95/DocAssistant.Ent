@@ -2,7 +2,7 @@
 
 namespace Shared.Models;
 
-public record RequestOverrides
+public record SearchParameters
 {
     public bool SemanticRanker { get; set; } = false;
 
@@ -16,4 +16,5 @@ public record RequestOverrides
     public string? PromptTemplatePrefix { get; set; }
     public string? PromptTemplateSuffix { get; set; }
     public bool SuggestFollowupQuestions { get; set; } = true;
+    public string[] Permissions { get; set; }
 }

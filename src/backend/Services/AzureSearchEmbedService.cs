@@ -106,7 +106,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
             {
                 new SimpleField("id", SearchFieldDataType.String) { IsKey = true },
                 new SearchableField("content") { AnalyzerName = LexicalAnalyzerName.EnMicrosoft },
-                new SimpleField("permissions", SearchFieldDataType.Collection(SearchFieldDataType.String)) { IsFacetable = true },
+                new SimpleField(IndexSection.PermissionsFieldName, SearchFieldDataType.Collection(SearchFieldDataType.String)) { IsFacetable = true, },
                 new SimpleField("sourcepage", SearchFieldDataType.String) { IsFacetable = true },
                 new SimpleField("sourcefile", SearchFieldDataType.String) { IsFacetable = true },
                 new SearchField("embedding", SearchFieldDataType.Collection(SearchFieldDataType.Single))
@@ -287,13 +287,13 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
         var metadata = new Dictionary<string, string>
         {
             {"OriginUri", originUri.ToString()},
-            {"permissions", string.Join(",", permissions) },
+            {IndexSection.PermissionsFieldName, string.Join(",", permissions) },
         };
 
         await blobClient.SetMetadataAsync(metadata);
     }
 
-    private IEnumerable<Section> CreateSections(
+    private IEnumerable<IndexSection> CreateSections(
         IReadOnlyList<PageDetail> pageMap, string blobName, string sourceFileUri, string[] permissions)
     {
         const int maxSectionLength = 1_000;
@@ -364,7 +364,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
 
             var sectionText = allText[start..end];
 
-            yield return new Section(
+            yield return new IndexSection(
                 id: MatchInSetRegex().Replace($"{blobName}-{start}", "_").TrimStart('_'),
                 content: sectionText,
                 sourcePage: BlobNameFromFilePage(blobName, FindPage(pageMap, start)),
@@ -398,7 +398,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
 
         if (start + sectionOverlap < end)
         {
-            yield return new Section(
+            yield return new IndexSection(
                 id: MatchInSetRegex().Replace($"{blobName}-{start}", "_").TrimStart('_'),
                 content: allText[start..end],
                 sourcePage: BlobNameFromFilePage(blobName, FindPage(pageMap, start)),
@@ -423,7 +423,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
 
     private static string BlobNameFromFilePage(string blobName, int page = 0) => blobName;
 
-    private async Task IndexSectionsAsync(string searchIndexName, IEnumerable<Section> sections, string blobName, string embeddingModelName)
+    private async Task IndexSectionsAsync(string searchIndexName, IEnumerable<IndexSection> sections, string blobName, string embeddingModelName)
     {
         var infoLoggingEnabled = _logger?.IsEnabled(LogLevel.Information);
         if (infoLoggingEnabled is true)
@@ -447,7 +447,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
                 {
                     ["id"] = section.Id,
                     ["content"] = section.Content,
-                    ["permissions"] = section.Permissions,
+                    [IndexSection.PermissionsFieldName] = section.Permissions,
                     ["sourcepage"] = section.SourcePage,
                     ["sourcefile"] = section.SourceFile,
                     ["embedding"] = embedding,

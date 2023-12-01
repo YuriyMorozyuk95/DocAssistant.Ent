@@ -107,7 +107,7 @@ public class UploaderDocumentService : IUploaderDocumentService
             var metadata = properties.Metadata;
 
 
-            if(metadata.TryGetValue("permissions", out string permissionsJson))
+            if(metadata.TryGetValue(IndexSection.PermissionsFieldName, out string permissionsJson))
             {
                 var permissions = JsonConvert.DeserializeObject<PermissionEntity[]>(permissionsJson);
                 permissionsList = permissions.Select(p => p.Name).ToArray();

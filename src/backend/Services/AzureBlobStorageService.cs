@@ -42,7 +42,7 @@ internal sealed class AzureBlobStorageService
                     },  
                     Metadata = new Dictionary<string, string>  
                     {  
-                        { "permissions", permissionsJson }  
+                        { IndexSection.PermissionsFieldName, permissionsJson }  
                     }  
                 };  
   

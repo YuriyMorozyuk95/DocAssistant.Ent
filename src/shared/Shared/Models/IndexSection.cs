@@ -2,15 +2,17 @@
 
 namespace Shared.Models;
 
-public readonly struct Section
+public readonly struct IndexSection
 {
+    public const string PermissionsFieldName = "permissions";
+
     public string Id { get; }
     public string Content { get; }
     public string SourcePage { get; }
     public string SourceFile { get; }
     public string[] Permissions { get; }
 
-    public Section(string id, string content, string sourcePage, string sourceFile, string[] permissions)
+    public IndexSection(string id, string content, string sourcePage, string sourceFile, string[] permissions)
     {
         Id = id;
         Content = content;

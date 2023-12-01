@@ -6,18 +6,28 @@ internal static class SearchClientExtensions
 {
     internal static async Task<SupportingContentRecord[]> QueryDocumentsAsync(
         this SearchClient searchClient,
+        SearchParameters searchParameters,
         string query = null,
         float[] embedding = null,
-        RequestOverrides overrides = null,
         CancellationToken cancellationToken = default)
     {
         var documentContents = string.Empty;
-        var top = overrides?.Top ?? 3;
+        var top = searchParameters?.Top ?? 3;
         // ReSharper disable once InconsistentNaming
-        var exclude_category = overrides?.ExcludeCategory;
-        var filter = exclude_category == null ? string.Empty : $"category ne '{exclude_category}'";
-        var useSemanticRanker = overrides?.SemanticRanker ?? false;
-        var useSemanticCaptions = overrides?.SemanticCaptions ?? false;
+        var useSemanticRanker = searchParameters?.SemanticRanker ?? false;
+        var useSemanticCaptions = searchParameters?.SemanticCaptions ?? false;
+
+        string filter;
+        if (searchParameters.Permissions?.Length > 0)  
+        {  
+            var filterQueries = searchParameters.Permissions.Select(p => $"permissions/any(permission: permission eq '{p}')");  
+            filter = string.Join(" or ", filterQueries);  
+        }  
+        else  
+        {  
+            filter = "permissions/any() eq false";  
+        }  
+ 
 
         SearchOptions searchOption = useSemanticRanker
             ? new SearchOptions
@@ -36,7 +46,7 @@ internal static class SearchClientExtensions
                 Size = top,
             };
 
-        if (embedding != null && overrides?.RetrievalMode != "Text")
+        if (embedding != null && searchParameters?.RetrievalMode != "Text")
         {
             var k = useSemanticRanker ? 50 : top;
             var vectorQuery = new RawVectorQuery
