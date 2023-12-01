@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using ClientApp.Services;
+using Shared.TableEntities;
+
 namespace MinimalApi.Extensions;
 
 internal static class WebApplicationExtensions
@@ -94,11 +96,15 @@ internal static class WebApplicationExtensions
 
     private static async Task<IResult> OnPostDocumentAsync(
         [FromForm] IFormFileCollection files,
+        [FromForm] string permissions,
         [FromServices] AzureBlobStorageService service,
         [FromServices] ILogger<AzureBlobStorageService> logger,
         CancellationToken cancellationToken)
     {
         logger.LogInformation("Upload documents");
+
+        // Deserialize permissions from JSON
+        var deserializedPermissions = JsonSerializer.Deserialize<PermissionEntity[]>(permissions);
 
         var response = await service.UploadFilesAsync(files, cancellationToken);
 
@@ -106,6 +112,7 @@ internal static class WebApplicationExtensions
 
         return TypedResults.Ok(response);
     }
+
 
     private static IAsyncEnumerable<DocumentResponse> OnGetDocumentsAsync(
         [FromServices] IUploaderDocumentService service,

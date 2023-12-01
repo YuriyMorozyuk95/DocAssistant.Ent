@@ -78,7 +78,7 @@ public sealed partial class Index : IDisposable
             var cookie = await JsRuntime.InvokeAsync<string>("getCookie", "XSRF-TOKEN");
 
             var result = await Client.UploadDocumentsAsync(
-                _fileUpload.Files, MaxIndividualFileSize, cookie);
+                _fileUpload.Files,_selectedPermissionsForDoc.ToArray(), MaxIndividualFileSize, cookie);
 
             Logger.LogInformation("Result: {x}", result);
 
