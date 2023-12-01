@@ -90,7 +90,7 @@ public class ReadRetrieveReadChatService
             SupportingContentRecord[] documentContentList = { };
             if (embeddings.Count() != 0 || query != null)
             {
-                documentContentList = await GetQueryDocuments(searchParameters, cancellationToken, query, embeddings);
+                documentContentList = await _searchClient.QueryDocumentsAsync(searchParameters, query, embeddings, cancellationToken);
                 documentContents = GetDocumentContents(documentContentList);
             }
             else
@@ -311,12 +311,6 @@ public class ReadRetrieveReadChatService
         _logger.LogInformation(documentContents);
         return documentContents;
     }
-
-    private Task<SupportingContentRecord[]> GetQueryDocuments(SearchParameters searchParameters, CancellationToken cancellationToken, string query, float[] embeddings)
-    {
-        return _searchClient.QueryDocumentsAsync(searchParameters, query, embeddings, cancellationToken);
-    }
-
     private async Task<string> GenerateQueryAsync(SearchParameters overrides, CancellationToken cancellationToken, IChatCompletion chat, string question)
     {
         string query = null;

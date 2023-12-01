@@ -3,6 +3,26 @@
 <PageTitle>Documents</PageTitle>
 
 <MudGrid Justify="Justify.Center">
+    <MudItem xs="12">  
+        <MudCard>  
+            <MudCardContent>  
+                <MudText Typo="Typo.h5">Index Creation Information</MudText>  
+                <MudText>Last Index Status: @_indexCreationInfo.LastIndexStatus.ToString()</MudText>  
+                <MudText>Last Index Error Message: @_indexCreationInfo.LastIndexErrorMessage</MudText>  
+                <MudText>Chunks Processed: @_indexCreationInfo.ChunksProcessed</MudText>  
+                <MudText>Documents Processed: @_indexCreationInfo.DocumentProcessed</MudText>  
+            </MudCardContent>  
+            <MudCardHeader>
+                <MudButton HtmlTag="label"
+                           Variant="Variant.Filled"
+                           StartIcon="@Icons.Material.Filled.CloudUpload"
+                           Size="Size.Large"
+                           OnClick="@(async () => await SynchronizeDocumentsAsync())">
+                    Synchronizing Index Documents
+                </MudButton>
+            </MudCardHeader>
+        </MudCard>  
+    </MudItem>
     <MudItem id="uploads" xs="12" Class="overflow-x-auto">
         <MudCard>
             <MudForm @ref="@_form">
@@ -10,15 +30,9 @@
                     <CardHeaderContent>
                         <MudText Typo="Typo.h5">Upload Documents</MudText>
                     </CardHeaderContent>
-                    <CardHeaderActions>
-                        <MudButton HtmlTag="label"
-                                   Variant="Variant.Filled"
-                                   StartIcon="@Icons.Material.Filled.CloudUpload"
-                                   Size="Size.Large"
-                                   OnClick="@(async () => await SynchronizeDocumentsAsync())">
-                            Synchronizing Index Documents
-                        </MudButton>
-                    </CardHeaderActions>
+                    @* <CardHeaderActions>
+                        
+                    </CardHeaderActions> *@
                 </MudCardHeader>
                 <MudCardContent>
                     <MudText Class="pb-4">

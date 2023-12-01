@@ -23,6 +23,9 @@ internal static class WebApplicationExtensions
         // synchronize documents in with blob storage and index
         api.MapPost("synchronize", OnPostSynchronizeAsync);
 
+        // Get synchronize status  
+        api.MapGet("synchronize-status", () => IndexCreationInformation.IndexCreationInfo);
+
         api.MapGet("enableLogout", OnGetEnableLogout);
 
         api.MapGet("copilot-prompts", OnGetCopilotPrompts);  

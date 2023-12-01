@@ -106,7 +106,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
             {
                 new SimpleField("id", SearchFieldDataType.String) { IsKey = true },
                 new SearchableField("content") { AnalyzerName = LexicalAnalyzerName.EnMicrosoft },
-                new SimpleField(IndexSection.PermissionsFieldName, SearchFieldDataType.Collection(SearchFieldDataType.String)) { IsFacetable = true, },
+                new SimpleField(IndexSection.PermissionsFieldName, SearchFieldDataType.Collection(SearchFieldDataType.String)) { IsFacetable = true, IsFilterable = true, },
                 new SimpleField("sourcepage", SearchFieldDataType.String) { IsFacetable = true },
                 new SimpleField("sourcefile", SearchFieldDataType.String) { IsFacetable = true },
                 new SearchField("embedding", SearchFieldDataType.Collection(SearchFieldDataType.Single))
@@ -439,7 +439,19 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
         var batch = new IndexDocumentsBatch<SearchDocument>();
         foreach (var section in sections)
         {
-            var embeddings = await _openAiClient.GetEmbeddingsAsync(embeddingModelName, new Azure.AI.OpenAI.EmbeddingsOptions(section.Content.Replace('\r', ' ')));
+            Response<Embeddings> embeddings;
+            try
+            {
+                embeddings = await _openAiClient.GetEmbeddingsAsync(embeddingModelName, new Azure.AI.OpenAI.EmbeddingsOptions(section.Content.Replace('\r', ' ')));
+                await Task.Delay(1000);
+            }
+            catch (Exception e)
+            {
+                await Task.Delay(3000);
+                embeddings = await _openAiClient.GetEmbeddingsAsync(embeddingModelName, new Azure.AI.OpenAI.EmbeddingsOptions(section.Content.Replace('\r', ' ')));
+                Console.WriteLine(e.Message);
+            }
+
             var embedding = embeddings.Value.Data.FirstOrDefault()?.Embedding.ToArray() ?? Array.Empty<float>();
             batch.Actions.Add(new IndexDocumentsAction<SearchDocument>(
                 IndexActionType.MergeOrUpload,
@@ -452,6 +464,8 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
                     ["sourcefile"] = section.SourceFile,
                     ["embedding"] = embedding,
                 }));
+
+            IndexCreationInformation.IndexCreationInfo.ChunksProcessed++;
 
             iteration++;
             if (iteration % 1_000 is 0)

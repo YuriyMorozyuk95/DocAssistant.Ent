@@ -35,6 +35,14 @@ public sealed partial class SettingsPanel : IDisposable
     [Parameter] public EventCallback<bool> OpenChanged { get; set; }
     [Parameter] public EventCallback<bool> UpdateButtonClicked { get; set; }
 
+    protected override Task OnInitializedAsync()
+    {
+        //TODO read from User
+        Settings.Overrides.SelectedPermissionList = MockPermissionService.GetPermissions(); 
+
+        return base.OnInitializedAsync();
+    }
+
     protected override void OnInitialized() => Nav.LocationChanged += HandleLocationChanged;
 
     private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)

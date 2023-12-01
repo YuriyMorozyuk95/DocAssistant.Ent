@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using System.Net.Http.Headers;
+using Shared;
 using Shared.TableEntities;
 
 namespace ClientApp.Services;
@@ -170,5 +171,13 @@ public sealed class ApiClient
     {  
         var response = await _httpClient.PostAsJsonAsync("api/copilot-prompts", updatedData);  
         response.EnsureSuccessStatusCode();  
-    } 
+    }
+
+    public async Task<IndexCreationInfo> GetIndexCreationInfoAsync()  
+    {  
+        var response = await _httpClient.GetAsync("synchronize-status");  
+        response.EnsureSuccessStatusCode();  
+        return (await response.Content.ReadFromJsonAsync<IndexCreationInfo>())!;  
+    }  
+
 }

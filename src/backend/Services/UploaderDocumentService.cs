@@ -77,6 +77,11 @@ public class UploaderDocumentService : IUploaderDocumentService
 
     public async Task UploadToAzureIndex()
     {
+        IndexCreationInformation.IndexCreationInfo.ChunksProcessed = 0;
+        IndexCreationInformation.IndexCreationInfo.DocumentProcessed = 0;
+        IndexCreationInformation.IndexCreationInfo.LastIndexErrorMessage = string.Empty;
+        IndexCreationInformation.IndexCreationInfo.LastIndexStatus = IndexStatus.Processing;
+
         var searchIndexName = _configuration["AzureSearchIndex"];
         var embeddingModel = _configuration["AzureOpenAiEmbeddingDeployment"];
 
@@ -92,6 +97,8 @@ public class UploaderDocumentService : IUploaderDocumentService
 
         await foreach (var document in GetDocuments())
         {
+            IndexCreationInformation.IndexCreationInfo.DocumentProcessed++;
+
             var fileName = document.Name;
             var blobClient = inputContainer.GetBlobClient(document.Name);
 
@@ -117,6 +124,7 @@ public class UploaderDocumentService : IUploaderDocumentService
 
             for (int i = 0; i < documents.PageCount; i++)
             {
+
                 var chunkName = BlobNameFromFilePage(fileName, i);
                 var tempFileName = Path.GetTempFileName();
 
@@ -128,6 +136,11 @@ public class UploaderDocumentService : IUploaderDocumentService
                     await using var tempStream = File.OpenRead(tempFileName);
 
                     await _azureSearchEmbedService.EmbedBlob(tempStream, chunkName, searchIndexName!, embeddingModel!, document.Url, permissionsList);
+                }
+                catch(Exception ex)
+                {
+                    IndexCreationInformation.IndexCreationInfo.LastIndexErrorMessage = ex.Message;
+                    IndexCreationInformation.IndexCreationInfo.LastIndexStatus = IndexStatus.Failed;
                 }
                 finally
                 {

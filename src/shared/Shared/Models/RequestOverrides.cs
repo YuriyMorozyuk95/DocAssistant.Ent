@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using Shared.TableEntities;
+
 namespace Shared.Models;
 
 public record SearchParameters
@@ -16,5 +18,7 @@ public record SearchParameters
     public string? PromptTemplatePrefix { get; set; }
     public string? PromptTemplateSuffix { get; set; }
     public bool SuggestFollowupQuestions { get; set; } = true;
-    public string[] Permissions { get; set; }
+    public List<PermissionEntity> SelectedPermissionList { get; set; } = new(); //TODO read from User
+
+    public string[] Permissions => SelectedPermissionList.Select(p => p.Name).ToArray();
 }
