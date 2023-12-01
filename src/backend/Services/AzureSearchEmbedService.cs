@@ -1,5 +1,4 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-
+﻿using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using Azure;
@@ -19,7 +18,7 @@ public interface IAzureSearchEmbedService
     /// An asynchronous operation that yields <c>true</c>
     /// when successfully embedded, otherwise <c>false</c>.
     /// </returns>
-    Task<bool> EmbedBlob(Stream blobStream, string blobName, string searchIndexName, string embeddingModelName, Uri originDocUrl);
+    Task<bool> EmbedBlob(Stream blobStream, string blobName, string searchIndexName, string embeddingModelName, Uri originDocUrl, string[] permissions);
 
     Task CreateSearchIndex(string searchIndexName);
     Task EnsureSearchIndex(string searchIndexName);
@@ -53,7 +52,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
     [GeneratedRegex("[^0-9a-zA-Z_-]")]
     private static partial Regex MatchInSetRegex();
 
-    public async Task<bool> EmbedBlob(Stream blobStream, string blobName, string searchIndexName, string embeddingModelName, Uri originDocUrl)
+    public async Task<bool> EmbedBlob(Stream blobStream, string blobName, string searchIndexName, string embeddingModelName, Uri originDocUrl, string[] permissions)
     {
         try
         {
@@ -68,10 +67,10 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
             foreach (var page in pageMap)
             {
                 var corpusName = $"{fileNameWithoutExtension}-{page.Index}.txt";
-                await UploadCorpusAsync(corpusName, page.Text, originDocUrl);
+                await UploadCorpusAsync(corpusName, page.Text, originDocUrl, permissions);
             }
 
-            var sections = CreateSections(pageMap, blobName, originDocUrl.ToString());
+            var sections = CreateSections(pageMap, blobName, originDocUrl.ToString(), permissions);
 
             await IndexSectionsAsync(searchIndexName, sections, blobName, embeddingModelName);
 
@@ -95,51 +94,52 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
             VectorSearch = new()
             {
                 Algorithms =
-            {
-                new HnswVectorSearchAlgorithmConfiguration(vectorSearchConfigName)
-            },
+                {
+                    new HnswVectorSearchAlgorithmConfiguration(vectorSearchConfigName)
+                },
                 Profiles =
-            {
-                new VectorSearchProfile(vectorSearchProfile, vectorSearchConfigName)
-            }
+                {
+                    new VectorSearchProfile(vectorSearchProfile, vectorSearchConfigName)
+                }
             },
             Fields =
-        {
-            new SimpleField("id", SearchFieldDataType.String) { IsKey = true },
-            new SearchableField("content") { AnalyzerName = LexicalAnalyzerName.EnMicrosoft },
-            new SimpleField("category", SearchFieldDataType.String) { IsFacetable = true },
-            new SimpleField("sourcepage", SearchFieldDataType.String) { IsFacetable = true },
-            new SimpleField("sourcefile", SearchFieldDataType.String) { IsFacetable = true },
-            new SearchField("embedding", SearchFieldDataType.Collection(SearchFieldDataType.Single))
             {
-                VectorSearchDimensions = 1536,
-                IsSearchable = true,
-                VectorSearchProfile = vectorSearchProfile,
-            }
-        },
+                new SimpleField("id", SearchFieldDataType.String) { IsKey = true },
+                new SearchableField("content") { AnalyzerName = LexicalAnalyzerName.EnMicrosoft },
+                new SimpleField("permissions", SearchFieldDataType.Collection(SearchFieldDataType.String)) { IsFacetable = true },
+                new SimpleField("sourcepage", SearchFieldDataType.String) { IsFacetable = true },
+                new SimpleField("sourcefile", SearchFieldDataType.String) { IsFacetable = true },
+                new SearchField("embedding", SearchFieldDataType.Collection(SearchFieldDataType.Single))
+                {
+                    VectorSearchDimensions = 1536,
+                    IsSearchable = true,
+                    VectorSearchProfile = vectorSearchProfile,
+                }
+            },
             SemanticSettings = new SemanticSettings
             {
                 Configurations =
-            {
-                new SemanticConfiguration("default", new PrioritizedFields
                 {
-                    ContentFields =
+                    new SemanticConfiguration("default", new PrioritizedFields
                     {
-                        new SemanticField
+                        ContentFields =
                         {
-                            FieldName = "content"
+                            new SemanticField
+                            {
+                                FieldName = "content"
+                            }
                         }
-                    }
-                })
-            }
+                    })
+                }
             }
         };
 
-        _logger?.LogInformation(
-                       "Creating '{searchIndexName}' search index", searchIndexName);
+       _logger?.LogInformation(
+            "Creating '{searchIndexName}' search index", searchIndexName);
 
         await _searchIndexClient.CreateIndexAsync(index);
     }
+
 
     public async Task EnsureSearchIndex(string searchIndexName)
     {
@@ -266,7 +266,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
         return tableHtml.ToString();
     }
 
-    private async Task UploadCorpusAsync(string corpusBlobName, string text, Uri originUri)
+    private async Task UploadCorpusAsync(string corpusBlobName, string text, Uri originUri, string[] permissions)
     {
         var container = await _storageService.GetOutputBlobContainerClient();
         var blobClient = container.GetBlobClient(corpusBlobName);
@@ -284,16 +284,17 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
         });
 
         // Set the metadata  
-        var metadata = new Dictionary<string, string>  
-        {  
-            {"OriginUri", originUri.ToString()}  
-        };  
-  
+        var metadata = new Dictionary<string, string>
+        {
+            {"OriginUri", originUri.ToString()},
+            {"permissions", string.Join(",", permissions) },
+        };
+
         await blobClient.SetMetadataAsync(metadata);
     }
 
     private IEnumerable<Section> CreateSections(
-        IReadOnlyList<PageDetail> pageMap, string blobName, string sourceFileUri)
+        IReadOnlyList<PageDetail> pageMap, string blobName, string sourceFileUri, string[] permissions)
     {
         const int maxSectionLength = 1_000;
         const int sentenceSearchLimit = 100;
@@ -364,10 +365,11 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
             var sectionText = allText[start..end];
 
             yield return new Section(
-                Id: MatchInSetRegex().Replace($"{blobName}-{start}", "_").TrimStart('_'),
-                Content: sectionText,
-                SourcePage: BlobNameFromFilePage(blobName, FindPage(pageMap, start)),
-                SourceFile: sourceFileUri);
+                id: MatchInSetRegex().Replace($"{blobName}-{start}", "_").TrimStart('_'),
+                content: sectionText,
+                sourcePage: BlobNameFromFilePage(blobName, FindPage(pageMap, start)),
+                sourceFile: sourceFileUri,
+                permissions: permissions);
 
             var lastTableStart = sectionText.LastIndexOf("<table", StringComparison.Ordinal);
             if (lastTableStart > 2 * sentenceSearchLimit && lastTableStart > sectionText.LastIndexOf("</table", StringComparison.Ordinal))
@@ -397,10 +399,11 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
         if (start + sectionOverlap < end)
         {
             yield return new Section(
-                Id: MatchInSetRegex().Replace($"{blobName}-{start}", "_").TrimStart('_'),
-                Content: allText[start..end],
-                SourcePage: BlobNameFromFilePage(blobName, FindPage(pageMap, start)),
-                SourceFile: sourceFileUri);
+                id: MatchInSetRegex().Replace($"{blobName}-{start}", "_").TrimStart('_'),
+                content: allText[start..end],
+                sourcePage: BlobNameFromFilePage(blobName, FindPage(pageMap, start)),
+                sourceFile: sourceFileUri,
+                permissions: permissions);
         }
     }
 
@@ -444,7 +447,7 @@ public sealed partial class AzureSearchAzureSearchEmbedService : IAzureSearchEmb
                 {
                     ["id"] = section.Id,
                     ["content"] = section.Content,
-                    ["category"] = section.Category,
+                    ["permissions"] = section.Permissions,
                     ["sourcepage"] = section.SourcePage,
                     ["sourcefile"] = section.SourceFile,
                     ["embedding"] = embedding,

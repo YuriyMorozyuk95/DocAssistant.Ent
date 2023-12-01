@@ -2,9 +2,20 @@
 
 namespace Shared.Models;
 
-public readonly record struct Section(
-    string Id,
-    string Content,
-    string SourcePage,
-    string SourceFile,
-    string? Category = null);
+public readonly struct Section
+{
+    public string Id { get; }
+    public string Content { get; }
+    public string SourcePage { get; }
+    public string SourceFile { get; }
+    public string[] Permissions { get; }
+
+    public Section(string id, string content, string sourcePage, string sourceFile, string[] permissions)
+    {
+        Id = id;
+        Content = content;
+        SourcePage = sourcePage;
+        SourceFile = sourceFile;
+        Permissions = permissions;
+    }
+}

@@ -106,7 +106,7 @@ internal static class WebApplicationExtensions
         // Deserialize permissions from JSON
         var deserializedPermissions = JsonSerializer.Deserialize<PermissionEntity[]>(permissions);
 
-        var response = await service.UploadFilesAsync(files, cancellationToken);
+        var response = await service.UploadFilesAsync(files, deserializedPermissions, cancellationToken);
 
         logger.LogInformation("Upload documents: {x}", response);
 
