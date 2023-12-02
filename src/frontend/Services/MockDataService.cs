@@ -21,7 +21,7 @@ public class MockUserService
         var e1 = new UserEntity
         {
             Id = "1",
-            Email = "bethany@bethanyspieshop.com",
+            Email = "netflixhome2024@gmail.com",
             FirstName = "Oleg",
             LastName = "Sedlaruk",
             ImageUrl = "https://hacktogatherstorage.blob.core.windows.net/avatars/Oleg.jpg",
