@@ -7,7 +7,7 @@ using Shared.TableEntities;
 
 namespace ClientApp.Pages;
 
-public sealed partial class Index : IDisposable
+public sealed partial class Documents : IDisposable
 {
     private const long MaxIndividualFileSize = 1_024L * 1_024;
 
