@@ -27,7 +27,7 @@
 
                 <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary" Class="mt-3 mr-2" OnClick="@HandleValidSubmitAsync">Save user</MudButton>
 
-                @if (User.Id?.Length > 0)
+            @if (User.Id?.Length > 0)
             {
                 <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Secondary" Class="mt-3 mr-2" OnClick="@DeleteUserAsync">
                     Delete

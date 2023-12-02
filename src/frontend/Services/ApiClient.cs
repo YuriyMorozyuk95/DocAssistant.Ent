@@ -198,7 +198,8 @@ public sealed class ApiClient
 
         response.EnsureSuccessStatusCode();
 
-        return await response.Content.ReadAsStringAsync();
+        var stringResponse = await response.Content.ReadAsStringAsync();
+        return stringResponse;
     }
 
 
