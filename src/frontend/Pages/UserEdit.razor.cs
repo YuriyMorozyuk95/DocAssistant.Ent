@@ -11,7 +11,7 @@ public partial class UserEdit
 
     //TODO user instead of MockDataService
     [Inject]
-    public UserApiClient UserApiClient { get; set; }
+    public IUserApiClient UserApiClient { get; set; }
 
     [Parameter]
     public string? UserId { get; set; }
@@ -28,7 +28,7 @@ public partial class UserEdit
     {
         Saved = false;
 
-           // var us = await UserApiClient.GetAllUsers();
+        //var us = await UserApiClient.GetAllUsers();
 
         var users = MockUserService.InitializeMockUsers();
         await UserApiClient.SaveChanges(users);

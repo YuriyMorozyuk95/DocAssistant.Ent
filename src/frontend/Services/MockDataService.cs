@@ -16,7 +16,7 @@ public class MockUserService
         }
     }
 
-    private static List<UserEntity> InitializeMockUsers()
+    public static List<UserEntity> InitializeMockUsers()
     {
         var e1 = new UserEntity
         {
