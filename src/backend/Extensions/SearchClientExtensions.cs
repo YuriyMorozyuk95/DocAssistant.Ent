@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using Microsoft.Azure.Cosmos.Serialization.HybridRow.RecordIO;
+
 namespace MinimalApi.Extensions;
 
 internal static class SearchClientExtensions
@@ -25,7 +27,7 @@ internal static class SearchClientExtensions
         }  
         else  
         {  
-            filter = "permissions/any() eq false";  
+            filter = "length(permissions) eq 0";  
         }  
  
 
@@ -102,14 +104,19 @@ internal static class SearchClientExtensions
                 contentValue = null;
             }
             doc.Document.TryGetValue("sourcefile", out var sourceFileValue);
+            doc.Document.TryGetValue(IndexSection.PermissionsFieldName, out var permissionsValue);
             if (sourcePageValue is string sourcePage && contentValue is string content)
             {
+                var permissions = (permissionsValue as object[]).Cast<string>().ToArray();
                 content = content.Replace('\r', ' ').Replace('\n', ' ');
 
-                sb.Add(new SupportingContentRecord(sourcePage, content, sourceFileValue as string));
+                sb.Add(new SupportingContentRecord(sourcePage, content, sourceFileValue as string, permissions));
             }
         }
 
+        //TODO debug
+        //var allowedChunks = sb.Where(record => searchParameters.Permissions.Any(p => record.Permissions.Contains(p))).ToArray();
+        //return allowedChunks;
         return sb.ToArray();
     }
 }
