@@ -1,4 +1,6 @@
-﻿using Shared.TableEntities;
+﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Shared.TableEntities;
 
 namespace ClientApp.Pages;
 
@@ -12,6 +14,11 @@ public partial class UserEdit
     //TODO user instead of MockDataService
     [Inject]
     public UserApiClient UserApiClient { get; set; }
+    [Inject]
+    public required IJSRuntime JsRuntime { get; set; }
+
+    [Inject]
+    public ApiClient ApiClient { get; set; }
 
     [Parameter]
     public string? UserId { get; set; }
@@ -96,4 +103,16 @@ public partial class UserEdit
     {
         NavigationManager.NavigateTo("/users-page");
     }
+
+    private async Task UploadFilesAsync(IBrowserFile file)
+    {
+        if (file != null)  
+        {
+            var cookie = await JsRuntime.InvokeAsync<string>("getCookie", "XSRF-TOKEN");
+
+            var imageUrl = await ApiClient.UploadAvatarAsync(file, cookie);
+            User.ImageUrl = imageUrl;
+        }  
+    }
+
 }

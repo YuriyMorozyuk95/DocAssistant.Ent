@@ -32,11 +32,43 @@ internal static class WebApplicationExtensions
   
         api.MapPost("copilot-prompts", OnPostCopilotPromptsAsync);
 
+        api.MapPost("upload-avatar", OnPostAvatarAsync);
+
         api.MapUserManagementApi();
         api.MapPermissionManagementApi();
 
         return app;
     }
+
+    private static async Task<IResult> OnPostAvatarAsync(
+        [FromForm] IFormFileCollection files,
+        [FromServices] BlobServiceClient blobService,
+        CancellationToken cancellationToken)
+    {
+        var file = files.FirstOrDefault();
+        if (file != null)
+        {
+
+            var name = Guid.NewGuid().ToString();
+            var containerClient = blobService.GetBlobContainerClient("avatars");
+            var blobClient = containerClient.GetBlobClient($"{name}.jpg");
+
+            await using var stream = file.OpenReadStream();
+            await blobClient.UploadAsync(stream, new BlobUploadOptions
+            {
+                HttpHeaders = new BlobHttpHeaders
+                {
+                    ContentType = file.ContentType,
+                },
+            }, cancellationToken);
+
+            // Since we don't have User object here, return the URL
+            return Results.Ok(blobClient.Uri.ToString());
+        }
+
+        return Results.BadRequest("No file uploaded");
+    }
+
 
     private static async Task<IResult> OnPostCopilotPromptsAsync(HttpContext context, [FromServices] ILogger<CopilotPromptsRequestResponse> logger)
     {
