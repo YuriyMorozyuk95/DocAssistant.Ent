@@ -35,4 +35,9 @@ public static class MockPermissionService
         _permissions = permission.ToList();
         return Task.CompletedTask;
     }
+
+    public static PermissionEntity GetPermissionById(string id)
+    {
+        return _permissions.FirstOrDefault(p => p.Id == id);
+    }
 }

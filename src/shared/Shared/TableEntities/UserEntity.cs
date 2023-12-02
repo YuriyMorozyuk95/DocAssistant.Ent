@@ -13,5 +13,5 @@ public class UserEntity
     public bool IsAdmin { get; set; } = false;
     public string ImageUrl { get; set; }
 
-    public IEnumerable<PermissionEntity> Permissions { get; set; }
+    public List<PermissionEntity> Permissions { get; set; } = new();
 }

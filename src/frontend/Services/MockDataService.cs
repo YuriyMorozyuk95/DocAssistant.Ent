@@ -25,6 +25,7 @@ public class MockUserService
             FirstName = "Oleg",
             LastName = "Sedlaruk",
             ImageUrl = "https://hacktogatherstorage.blob.core.windows.net/avatars/Oleg.jpg",
+            Permissions = MockPermissionService.GetPermissions(),
         };
 
         var e2 = new UserEntity
@@ -34,6 +35,7 @@ public class MockUserService
             FirstName = "Victoria",
             LastName = "Naffato",
             ImageUrl = "https://hacktogatherstorage.blob.core.windows.net/avatars/Victoria.jpg",
+            Permissions = new List<PermissionEntity> { MockPermissionService.GetPermissionById("2"), MockPermissionService.GetPermissionById("3") },
         };
 
         var e3 = new UserEntity
@@ -43,6 +45,7 @@ public class MockUserService
             FirstName = "Yurii",
             LastName = "Moroziuk",
             ImageUrl = "https://hacktogatherstorage.blob.core.windows.net/avatars/Yurii.jpg",
+            Permissions = new List<PermissionEntity> { MockPermissionService.GetPermissionById("1") },
         };
 
         return new List<UserEntity>() { e1, e2, e3 };

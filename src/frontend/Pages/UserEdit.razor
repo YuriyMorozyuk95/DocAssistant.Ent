@@ -10,6 +10,7 @@
                 <MudTextField Label="Last name: " @bind-Value="@User.LastName" For="@(() => User.LastName)" />
                 <MudTextField Label="First name: " @bind-Value="@User.FirstName" For="@(() => User.FirstName)" />
                 <MudTextField Label="Email: " @bind-Value="@User.Email" For="@(() => User.Email)" />
+                <PermissionMultiSelect @bind-SelectedItems="@User.Permissions" IsEnabled=true />
 
                 <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary" Class="mt-3 mr-2" OnClick="@HandleValidSubmitAsync">Save user</MudButton>
 
