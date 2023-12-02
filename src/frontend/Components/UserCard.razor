@@ -1,22 +1,10 @@
-﻿<div class="col">
-    <div class="card rounded-3 employee-card">
-        <div class="card-header py-3">
-            <h4>@User.FirstName @User.LastName</h4>
-        </div>
-        <div class="card-body employee-card text-center">
-           
+﻿<MudCard>
+    <MudCardContent>
+        <MudText Typo="Typo.subtitle1">@User.FirstName @User.LastName</MudText>
             <div class="mb-3">
-               @*  TODO: Add image *@
                 <img src="@($"https://gillcleerenpluralsight.blob.core.windows.net/person/{User.Id}.jpg")" class="employee-img rounded-circle img-fluid" />
             </div>
-            @* <button class="btn btn-primary btn-sm mb-1" @onclick="@(async () => await EmployeeQuickViewClicked.InvokeAsync(User))"> Quick view</button> *@
-            <a href="@($"user-edit/{User.Id}")" class="btn btn-outline-primary btn-sm mb-1">
-                Full details
-            </a>
-@*            <button class="btn btn-outline-primary btn-sm mb-1" @onclick="(() => NavigateToDetails(Employee))">
-                Full details
-            </button>*@
-        </div>
-    </div>
-</div>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" Link="@($"user-edit/{User.Id}")">Full details</MudButton>
+        </MudCardContent>
+    </MudCard>
 
