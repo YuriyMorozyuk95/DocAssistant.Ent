@@ -41,8 +41,8 @@ internal static class UserManagementEndpointsExtensions
 
     private static async Task OnGetAllUsersAsync(HttpContext context, IUserRepository repository)
     {
-        var permissions = await repository.GetAllUsersAsync();
-        await context.Response.WriteAsJsonAsync(permissions);
+        var users = await repository.GetAllUsersAsync();
+        await context.Response.WriteAsJsonAsync(users);
     }
 
     private static async Task OnDeleteUserAsync(HttpContext context, IUserRepository repository)

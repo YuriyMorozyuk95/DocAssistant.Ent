@@ -28,6 +28,11 @@ public partial class UserEdit
     {
         Saved = false;
 
+           // var us = await UserApiClient.GetAllUsers();
+
+        var users = MockUserService.InitializeMockUsers();
+        await UserApiClient.SaveChanges(users);
+
         int.TryParse(UserId, out var userId);
 
         if (userId == 0) //new user is being created  
