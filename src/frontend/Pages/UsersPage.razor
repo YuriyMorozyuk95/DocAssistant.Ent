@@ -4,7 +4,9 @@
   
 <HeadContent>  
     <meta name="description" content="@Description">  
-</HeadContent>  
+</HeadContent>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => NavigationManager.NavigateTo("/user-edit"))">Create New User</MudButton>
   
 <h2>User Overview</h2>  
   
@@ -14,7 +16,7 @@
 }  
 else  
 {  
-    <MudGrid Spacing="3" Justify="Justify.Center">  
+    <MudGrid Spacing="5" Justify="Justify.FlexStart">  
         @foreach (var user in Users)  
         {
             <MudItem>
