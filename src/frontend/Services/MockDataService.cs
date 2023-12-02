@@ -24,6 +24,7 @@ public class MockUserService
             Email = "bethany@bethanyspieshop.com",
             FirstName = "Oleg",
             LastName = "Sedlaruk",
+            ImageUrl = "https://hacktogatherstorage.blob.core.windows.net/avatars/Oleg.jpg",
         };
 
         var e2 = new UserEntity
@@ -32,6 +33,7 @@ public class MockUserService
             Email = "Victoria.naffato@gmail.com",
             FirstName = "Victoria",
             LastName = "Naffato",
+            ImageUrl = "https://hacktogatherstorage.blob.core.windows.net/avatars/Victoria.jpg",
         };
 
         var e3 = new UserEntity
@@ -40,6 +42,7 @@ public class MockUserService
             Email = "Yuriy.Morozyuk.95@gmail.com",
             FirstName = "Yurii",
             LastName = "Moroziuk",
+            ImageUrl = "https://hacktogatherstorage.blob.core.windows.net/avatars/Yurii.jpg",
         };
 
         return new List<UserEntity>() { e1, e2, e3 };

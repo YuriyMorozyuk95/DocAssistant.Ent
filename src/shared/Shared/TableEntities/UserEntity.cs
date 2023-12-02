@@ -11,5 +11,7 @@ public class UserEntity
     public string PasswordHash { get; set; }
     public int AccountId { get; set; }
     public bool IsAdmin { get; set; } = false;
+    public string ImageUrl { get; set; }
+
     public IEnumerable<PermissionEntity> Permissions { get; set; }
 }
