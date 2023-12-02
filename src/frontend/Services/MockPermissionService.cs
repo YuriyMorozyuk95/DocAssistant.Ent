@@ -12,11 +12,10 @@ public static class MockPermissionService
     {
         _permissions = new List<PermissionEntity>
         {
-            new PermissionEntity { Id = "1", Name = "Permission 1" },
-            new PermissionEntity { Id = "2", Name = "Permission 2" },
-            new PermissionEntity { Id = "3", Name = "Permission 3" },
-            new PermissionEntity { Id = "4", Name = "Permission 4" },
-            new PermissionEntity { Id = "5", Name = "Permission 5" },
+            new PermissionEntity { Id = "1", Name = "Development" },
+            new PermissionEntity { Id = "2", Name = "Management" },
+            new PermissionEntity { Id = "3", Name = "Business Analyst" },
+            new PermissionEntity { Id = "4", Name = "Chief Executive Officer" },
         };
     }
 

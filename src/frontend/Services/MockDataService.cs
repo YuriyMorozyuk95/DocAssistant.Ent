@@ -22,24 +22,24 @@ public class MockUserService
         {
             Id = "1",
             Email = "bethany@bethanyspieshop.com",
-            FirstName = "Bethany",
-            LastName = "Smith",
+            FirstName = "Oleg",
+            LastName = "Sedlaruk",
         };
 
         var e2 = new UserEntity
         {
             Id = "2",
-            Email = "gill@bethanyspieshop.com",
-            FirstName = "Gill",
-            LastName = "Cleeren",
+            Email = "Victoria.naffato@gmail.com",
+            FirstName = "Victoria",
+            LastName = "Naffato",
         };
 
         var e3 = new UserEntity
         {
             Id = "3",
-            Email = "gill@bethanyspieshop.com",
-            FirstName = "Jane",
-            LastName = String.Empty,
+            Email = "Yuriy.Morozyuk.95@gmail.com",
+            FirstName = "Yurii",
+            LastName = "Moroziuk",
         };
 
         return new List<UserEntity>() { e1, e2, e3 };
