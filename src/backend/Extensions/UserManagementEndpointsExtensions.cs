@@ -12,7 +12,8 @@ internal static class UserManagementEndpointsExtensions
         // User management endpoints  
         api.MapGet("users", OnGetAllUsersAsync);    
         api.MapGet("users/{userId}", OnGetUserDetailsAsync);    
-        api.MapPut("users/{userId}", OnUpdateUserAsync);    
+        api.MapPut("users/{userId}", OnUpdateUserAsync);
+        api.MapPost("users", OnAddUserAsync);
         api.MapDelete("users/{userId}", OnDeleteUserAsync);  
     }
 
@@ -20,6 +21,13 @@ internal static class UserManagementEndpointsExtensions
     {
         var user = await context.Request.ReadFromJsonAsync<UserEntity>();
         await repository.UpdateUserAsync(user);
+        context.Response.StatusCode = StatusCodes.Status204NoContent;
+    }
+
+    private static async Task OnAddUserAsync(HttpContext context, IUserRepository repository)
+    {
+        var user = await context.Request.ReadFromJsonAsync<UserEntity>();
+        await repository.AddUserAsync(user);
         context.Response.StatusCode = StatusCodes.Status204NoContent;
     }
 

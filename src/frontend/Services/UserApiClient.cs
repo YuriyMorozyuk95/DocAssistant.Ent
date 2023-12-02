@@ -8,6 +8,7 @@ public interface IUserApiClient
 {
     Task<IEnumerable<UserEntity>> GetAllUsers();
     Task<UserEntity> GetUserDetails(int userId);
+    Task<UserEntity> AddUser(UserEntity user);
     Task UpdateUser(UserEntity user);
     Task DeleteUser(string userId);
 }
@@ -33,8 +34,15 @@ public class UserApiClient : IUserApiClient
         var response = await _httpClient.GetAsync($"api/users/{userId}");  
         response.EnsureSuccessStatusCode();  
         return await response.Content.ReadFromJsonAsync<UserEntity>();  
-    }  
-  
+    }
+
+    public async Task<UserEntity> AddUser(UserEntity user)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/users", user);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<UserEntity>();
+    }
+
     public async Task UpdateUser(UserEntity user)  
     {  
         var response = await _httpClient.PutAsJsonAsync($"api/users/{user.Id}", user);  
