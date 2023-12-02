@@ -11,6 +11,7 @@ public interface IUserApiClient
     Task<UserEntity> AddUser(UserEntity user);
     Task UpdateUser(UserEntity user);
     Task DeleteUser(string userId);
+    Task SaveChanges(IEnumerable<UserEntity> users);
 }
 
 public class UserApiClient : IUserApiClient  
@@ -27,8 +28,14 @@ public class UserApiClient : IUserApiClient
         var usersResponse = await _httpClient.GetAsync("api/users");  
         usersResponse.EnsureSuccessStatusCode();  
         return await usersResponse.Content.ReadFromJsonAsync<IEnumerable<UserEntity>>();  
-    }  
-  
+    }
+
+    public async Task SaveChanges(IEnumerable<UserEntity> users)
+    {
+        var response = await _httpClient.PutAsJsonAsync("api/users", users);
+        response.EnsureSuccessStatusCode();
+    }
+
     public async Task<UserEntity> GetUserDetails(int userId)  
     {  
         var response = await _httpClient.GetAsync($"api/users/{userId}");  

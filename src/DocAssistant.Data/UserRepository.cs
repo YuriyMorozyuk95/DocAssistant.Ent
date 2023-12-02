@@ -47,6 +47,14 @@ public class UserRepository : IUserRepository
         await _container.UpsertItemAsync(user, new PartitionKey(user.Id));
     }
 
+    public async Task SaveUsersAsync(IEnumerable<UserEntity> users)
+    {
+        foreach (var user in users)
+        {
+            await _container.UpsertItemAsync(user, new PartitionKey(user.Id));
+        }
+    }
+
     public async Task DeleteUserAsync(string id)
     {
         await _container.DeleteItemAsync<UserEntity>(id, new PartitionKey(id));

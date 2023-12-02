@@ -13,6 +13,8 @@ public interface IUserRepository
 
     Task UpdateUserAsync(UserEntity user);
 
+    Task SaveUsersAsync(IEnumerable<UserEntity> users);
+
     Task DeleteUserAsync(string id);
 
 }
