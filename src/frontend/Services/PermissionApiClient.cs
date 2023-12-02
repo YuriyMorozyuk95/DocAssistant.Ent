@@ -6,7 +6,8 @@ namespace ClientApp.Services;
 
 public interface IPermissionApiClient  
 {  
-    Task<IEnumerable<PermissionEntity>> GetAllPermissions();  
+    Task<IEnumerable<PermissionEntity>> GetAllPermissions();
+    Task<PermissionEntity> GetPermissionById(string permissionId);
     Task DeletePermission(string permissionId);  
     Task SaveChanges(IEnumerable<PermissionEntity> permissions);  
 }  
@@ -25,8 +26,15 @@ public class PermissionApiClient : IPermissionApiClient
         var permissionsResponse = await _httpClient.GetAsync("api/permissions");    
         permissionsResponse.EnsureSuccessStatusCode();    
         return await permissionsResponse.Content.ReadFromJsonAsync<IEnumerable<PermissionEntity>>();    
-    }    
-    
+    }
+
+    public async Task<PermissionEntity> GetPermissionById(string permissionId)
+    {
+        var response = await _httpClient.GetAsync($"api/permissions/{permissionId}");
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<PermissionEntity>();
+    }
+
     public async Task DeletePermission(string permissionId)    
     {    
         var response = await _httpClient.DeleteAsync($"api/permissions/{permissionId}");    

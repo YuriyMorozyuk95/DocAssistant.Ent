@@ -7,25 +7,42 @@ namespace DocAssistant.Data;
 
 public class PermissionRepository : IPermissionRepository
 {
-    protected readonly Container Container;
+    private readonly Container _container;
+
     public PermissionRepository(Container container)
     {
-        Container = container;
+        _container = container;
     }
 
-    public async Task<PermissionEntity> GetPermissionByIdAsync(string id, string? name)
+    public async Task<PermissionEntity> GetPermissionByIdAsync(string id)
     {
-        ItemResponse<PermissionEntity> response = await Container.ReadItemAsync<PermissionEntity>(id, new PartitionKey(name));
+        var response = await _container.ReadItemAsync<PermissionEntity>(id, new PartitionKey(id));
         return response.Resource;
-
     }
 
-    public async Task<PermissionEntity> AddPermissionAsync(PermissionEntity permission)
+    public async Task<IEnumerable<PermissionEntity>> GetAllPermissionsAsync()
     {
+        var query = new QueryDefinition("SELECT * FROM c");
+        var resultSetIterator = _container.GetItemQueryIterator<PermissionEntity>(query);
+        List<PermissionEntity> results = new List<PermissionEntity>();
+        while (resultSetIterator.HasMoreResults)
+        {
+            var response = await resultSetIterator.ReadNextAsync();
+            results.AddRange(response.ToList());
+        }
+        return results;
+    }
 
-        permission.Id = Guid.NewGuid().ToString();
-        var response = await Container.CreateItemAsync(permission, new PartitionKey(permission.Name));
+    public async Task DeletePermissionAsync(string id)
+    {
+        await _container.DeleteItemAsync<PermissionEntity>(id, new PartitionKey(id));
+    }
 
-        return response.Resource;
+    public async Task SavePermissionAsync(IEnumerable<PermissionEntity> permissions)
+    {
+        foreach (var permission in permissions)
+        {
+            await _container.UpsertItemAsync(permission, new PartitionKey(permission.Id));
+        }
     }
 }

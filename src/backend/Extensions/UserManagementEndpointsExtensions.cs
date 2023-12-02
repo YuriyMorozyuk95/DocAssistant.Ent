@@ -1,5 +1,8 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using DocAssistant.Data.Interfaces;
+using Shared.TableEntities;
+
 namespace MinimalApi.Extensions;
 
 internal static class UserManagementEndpointsExtensions
@@ -13,23 +16,31 @@ internal static class UserManagementEndpointsExtensions
         api.MapDelete("users/{userId}", OnDeleteUserAsync);  
     }
 
-    private static Task OnUpdateUserAsync(HttpContext context)
+    private static async Task OnUpdateUserAsync(HttpContext context, IUserRepository repository)
     {
-        throw new NotImplementedException();
+        var user = await context.Request.ReadFromJsonAsync<UserEntity>();
+        await repository.UpdateUserAsync(user);
+        context.Response.StatusCode = StatusCodes.Status204NoContent;
     }
 
-    private static Task OnGetUserDetailsAsync(HttpContext context)
+    private static async Task OnGetUserDetailsAsync(HttpContext context, IUserRepository repository)
     {
-        throw new NotImplementedException();
+        var userId = context.Request.RouteValues["userId"]?.ToString();
+        var permissions = await repository.GetUserByIdAsync(userId);
+        await context.Response.WriteAsJsonAsync(permissions);
     }
 
-    private static Task OnGetAllUsersAsync(HttpContext context)
+    private static async Task OnGetAllUsersAsync(HttpContext context, IUserRepository repository)
     {
-        throw new NotImplementedException();
+        var permissions = await repository.GetAllUsersAsync();
+        await context.Response.WriteAsJsonAsync(permissions);
     }
 
-    private static Task OnDeleteUserAsync(HttpContext context)
+    private static async Task OnDeleteUserAsync(HttpContext context, IUserRepository repository)
     {
-        throw new NotImplementedException();
+        var userId = context.Request.RouteValues["userId"]?.ToString();
+        await repository.DeleteUserAsync(userId);
+
+        context.Response.StatusCode = StatusCodes.Status204NoContent;
     }
 }

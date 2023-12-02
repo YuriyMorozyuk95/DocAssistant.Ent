@@ -1,6 +1,4 @@
-﻿using System.Security;
-
-using Shared.TableEntities;
+﻿using Shared.TableEntities;
 
 namespace ClientApp.Pages;
 
