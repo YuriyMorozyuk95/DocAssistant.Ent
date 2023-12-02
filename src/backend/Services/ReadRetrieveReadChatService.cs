@@ -44,21 +44,12 @@ public class ReadRetrieveReadChatService
     // This method generates a reply to a given chat history.  
     public async Task<ApproachResponse> ReplyAsync(
         ChatTurn[] history,
-        RequestOverrides overrides,
+        SearchParameters searchParameters,
         CancellationToken cancellationToken = default)
     {
-        var response = new ApproachResponse();
         var errorBuilder = new StringBuilder();
         try
         {
-            // Get the top results, whether to use semantic captions and ranker, and the category to exclude from overrides
-            //TODO permission & category
-            var top = overrides?.Top ?? 3;
-            var useSemanticCaptions = overrides?.SemanticCaptions ?? false;
-            var useSemanticRanker = overrides?.SemanticRanker ?? false;
-            var excludeCategory = overrides?.ExcludeCategory ?? null;
-            var filter = excludeCategory is null ? null : $"category ne '{excludeCategory}'";
-
             // Get chat completion and text embedding generation services from the kernel  
             IChatCompletion chat = _kernel.GetService<IChatCompletion>();
             ITextEmbeddingGeneration embedding = _kernel.GetService<ITextEmbeddingGeneration>();
@@ -69,7 +60,7 @@ public class ReadRetrieveReadChatService
             float[] embeddings;
             try
             {
-                embeddings = await GenerateEmbeddingsAsync(overrides, cancellationToken, embedding, question);
+                embeddings = await GenerateEmbeddingsAsync(searchParameters, cancellationToken, embedding, question);
             }
             catch (Exception e)
             {
@@ -82,7 +73,7 @@ public class ReadRetrieveReadChatService
             string query;
             try
             {
-                query = await GenerateQueryAsync(overrides, cancellationToken, chat, question);
+                query = await GenerateQueryAsync(searchParameters, cancellationToken, chat, question);
             }
             catch (Exception e)
             {
@@ -99,7 +90,7 @@ public class ReadRetrieveReadChatService
             SupportingContentRecord[] documentContentList = { };
             if (embeddings.Count() != 0 || query != null)
             {
-                documentContentList = await GetQueryDocuments(overrides, cancellationToken, query, embeddings);
+                documentContentList = await _searchClient.QueryDocumentsAsync(searchParameters, query, embeddings, cancellationToken);
                 documentContents = GetDocumentContents(documentContentList);
             }
             else
@@ -141,7 +132,7 @@ public class ReadRetrieveReadChatService
                 // step 4
                 // add follow up questions if requested
                 // If follow-up questions are requested, generate them  
-                if (overrides?.SuggestFollowupQuestions is true)
+                if (searchParameters?.SuggestFollowupQuestions is true)
                 {
                     (answer, questions) = await UpdateAnswerWithFollowUpQuestionsAsync(cancellationToken, chat, answer);
                 }
@@ -320,13 +311,7 @@ public class ReadRetrieveReadChatService
         _logger.LogInformation(documentContents);
         return documentContents;
     }
-
-    private Task<SupportingContentRecord[]> GetQueryDocuments(RequestOverrides overrides, CancellationToken cancellationToken, string query, float[] embeddings)
-    {
-        return _searchClient.QueryDocumentsAsync(query, embeddings, overrides, cancellationToken);
-    }
-
-    private async Task<string> GenerateQueryAsync(RequestOverrides overrides, CancellationToken cancellationToken, IChatCompletion chat, string question)
+    private async Task<string> GenerateQueryAsync(SearchParameters overrides, CancellationToken cancellationToken, IChatCompletion chat, string question)
     {
         string query = null;
         if (overrides?.RetrievalMode != "Vector")
@@ -357,7 +342,7 @@ public class ReadRetrieveReadChatService
         return query;
     }
 
-    private async Task<float[]> GenerateEmbeddingsAsync(RequestOverrides overrides, CancellationToken cancellationToken, ITextEmbeddingGeneration embedding, string question)
+    private async Task<float[]> GenerateEmbeddingsAsync(SearchParameters overrides, CancellationToken cancellationToken, ITextEmbeddingGeneration embedding, string question)
     {
         float[] embeddings = null;
         if (overrides?.RetrievalMode != "Text" && embedding is not null)

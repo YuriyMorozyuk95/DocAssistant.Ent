@@ -4,16 +4,18 @@ namespace Shared.Models;
 
 public class SupportingContentRecord  
 {  
-    public SupportingContentRecord(string title, string content, string originUri = null)  
+    public SupportingContentRecord(string title, string content, string originUri = null, string[] permissions = null)  
     {  
         Title = title;  
         Content = content;
         OriginUri = originUri;
+        Permissions = permissions ?? Array.Empty<string>();
     }  
   
     public string Title { get; set; }  
     public string Content { get; set; }
-    public string OriginUri { get; set; } 
+    public string OriginUri { get; set; }
+    public string[] Permissions { get; set; } 
 }  
  
 public class ApproachResponse  

@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using ClientApp.Services;
+using Shared.TableEntities;
+
 namespace MinimalApi.Extensions;
 
 internal static class WebApplicationExtensions
@@ -20,6 +22,9 @@ internal static class WebApplicationExtensions
 
         // synchronize documents in with blob storage and index
         api.MapPost("synchronize", OnPostSynchronizeAsync);
+
+        // Get synchronize status  
+        api.MapGet("synchronize-status", () => IndexCreationInformation.IndexCreationInfo);
 
         api.MapGet("enableLogout", OnGetEnableLogout);
 
@@ -94,18 +99,23 @@ internal static class WebApplicationExtensions
 
     private static async Task<IResult> OnPostDocumentAsync(
         [FromForm] IFormFileCollection files,
+        [FromForm] string permissions,
         [FromServices] AzureBlobStorageService service,
         [FromServices] ILogger<AzureBlobStorageService> logger,
         CancellationToken cancellationToken)
     {
         logger.LogInformation("Upload documents");
 
-        var response = await service.UploadFilesAsync(files, cancellationToken);
+        // Deserialize permissions from JSON
+        var deserializedPermissions = JsonSerializer.Deserialize<PermissionEntity[]>(permissions);
+
+        var response = await service.UploadFilesAsync(files, deserializedPermissions, cancellationToken);
 
         logger.LogInformation("Upload documents: {x}", response);
 
         return TypedResults.Ok(response);
     }
+
 
     private static IAsyncEnumerable<DocumentResponse> OnGetDocumentsAsync(
         [FromServices] IUploaderDocumentService service,

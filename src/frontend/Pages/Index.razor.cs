@@ -1,6 +1,9 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using Microsoft.JSInterop;
+using System.Net.Http;
+
+using Shared;
+using Shared.TableEntities;
 
 namespace ClientApp.Pages;
 
@@ -14,6 +17,9 @@ public sealed partial class Index : IDisposable
     private bool _isLoadingDocuments = false;
     private bool _isIndexUploading = false;
     private string _filter = "";
+    private IndexCreationInfo _indexCreationInfo = new IndexCreationInfo();
+    private Timer _timer;
+    private List<PermissionEntity> _selectedPermissionsForDoc = new List<PermissionEntity>();
 
     // Store a cancelation token that will be used to cancel if the user disposes of this component.
     private readonly CancellationTokenSource _cancellationTokenSource = new();
@@ -43,6 +49,25 @@ public sealed partial class Index : IDisposable
         _getDocumentsTask = GetDocumentsAsync();
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        _timer = new Timer(async _ => await LoadIndexCreationInfoAsync(), null, 0, 30000);
+
+        await LoadIndexCreationInfoAsync();
+    }
+
+    private async Task LoadIndexCreationInfoAsync()
+    {
+        try
+        {
+            _indexCreationInfo = await Client.GetIndexCreationInfoAsync(); // Call your method to fetch the IndexCreationInfo
+        }
+        catch (Exception e)
+        {
+            _indexCreationInfo = new IndexCreationInfo();
+        }
+        StateHasChanged(); // Notify Blazor that the state has changed and UI needs to be updated 
+    }
 
     private bool OnFilter(DocumentResponse document) => document is not null
                                                         && (string.IsNullOrWhiteSpace(_filter) || document.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase));
@@ -77,7 +102,7 @@ public sealed partial class Index : IDisposable
             var cookie = await JsRuntime.InvokeAsync<string>("getCookie", "XSRF-TOKEN");
 
             var result = await Client.UploadDocumentsAsync(
-                _fileUpload.Files, MaxIndividualFileSize, cookie);
+                _fileUpload.Files, _selectedPermissionsForDoc.ToArray(), MaxIndividualFileSize, cookie);
 
             Logger.LogInformation("Result: {x}", result);
 
@@ -93,6 +118,7 @@ public sealed partial class Index : IDisposable
                     });
 
                 await _fileUpload.ResetAsync();
+                _selectedPermissionsForDoc.Clear();
                 await GetDocumentsAsync();
             }
             else
@@ -125,7 +151,11 @@ public sealed partial class Index : IDisposable
                 CloseOnEscapeKey = true
             });
 
-    public void Dispose() => _cancellationTokenSource.Cancel();
+    public void Dispose()
+    {
+        _timer?.Dispose();
+        _cancellationTokenSource.Cancel();
+    }
 
     private async Task SynchronizeDocumentsAsync()
     {

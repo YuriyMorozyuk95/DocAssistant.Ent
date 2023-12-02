@@ -1,23 +1,35 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using Microsoft.Azure.Cosmos.Serialization.HybridRow.RecordIO;
+
 namespace MinimalApi.Extensions;
 
 internal static class SearchClientExtensions
 {
     internal static async Task<SupportingContentRecord[]> QueryDocumentsAsync(
         this SearchClient searchClient,
+        SearchParameters searchParameters,
         string query = null,
         float[] embedding = null,
-        RequestOverrides overrides = null,
         CancellationToken cancellationToken = default)
     {
         var documentContents = string.Empty;
-        var top = overrides?.Top ?? 3;
+        var top = searchParameters?.Top ?? 3;
         // ReSharper disable once InconsistentNaming
-        var exclude_category = overrides?.ExcludeCategory;
-        var filter = exclude_category == null ? string.Empty : $"category ne '{exclude_category}'";
-        var useSemanticRanker = overrides?.SemanticRanker ?? false;
-        var useSemanticCaptions = overrides?.SemanticCaptions ?? false;
+        var useSemanticRanker = searchParameters?.SemanticRanker ?? false;
+        var useSemanticCaptions = searchParameters?.SemanticCaptions ?? false;
+
+        string filter;
+        if (searchParameters.Permissions?.Length > 0)  
+        {  
+            var filterQueries = searchParameters.Permissions.Select(p => $"permissions/any(permission: permission eq '{p}')");  
+            filter = string.Join(" or ", filterQueries);  
+        }  
+        else  
+        {  
+            filter = "length(permissions) eq 0";  
+        }  
+ 
 
         SearchOptions searchOption = useSemanticRanker
             ? new SearchOptions
@@ -36,7 +48,7 @@ internal static class SearchClientExtensions
                 Size = top,
             };
 
-        if (embedding != null && overrides?.RetrievalMode != "Text")
+        if (embedding != null && searchParameters?.RetrievalMode != "Text")
         {
             var k = useSemanticRanker ? 50 : top;
             var vectorQuery = new RawVectorQuery
@@ -92,14 +104,19 @@ internal static class SearchClientExtensions
                 contentValue = null;
             }
             doc.Document.TryGetValue("sourcefile", out var sourceFileValue);
+            doc.Document.TryGetValue(IndexSection.PermissionsFieldName, out var permissionsValue);
             if (sourcePageValue is string sourcePage && contentValue is string content)
             {
+                var permissions = (permissionsValue as object[]).Cast<string>().ToArray();
                 content = content.Replace('\r', ' ').Replace('\n', ' ');
 
-                sb.Add(new SupportingContentRecord(sourcePage, content, sourceFileValue as string));
+                sb.Add(new SupportingContentRecord(sourcePage, content, sourceFileValue as string, permissions));
             }
         }
 
+        //TODO debug
+        //var allowedChunks = sb.Where(record => searchParameters.Permissions.Any(p => record.Permissions.Contains(p))).ToArray();
+        //return allowedChunks;
         return sb.ToArray();
     }
 }

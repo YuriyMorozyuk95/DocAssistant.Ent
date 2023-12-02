@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using Shared.TableEntities;
+
 namespace MinimalApi.Services;
 
 internal sealed class AzureBlobStorageService
@@ -10,7 +12,7 @@ internal sealed class AzureBlobStorageService
     {
         _storageService = storageService;
     }
-    internal async Task<UploadDocumentsResponse> UploadFilesAsync(IEnumerable<IFormFile> files, CancellationToken cancellationToken)
+    internal async Task<UploadDocumentsResponse> UploadFilesAsync(IEnumerable<IFormFile> files, PermissionEntity[] permissions, CancellationToken cancellationToken)
     {
         var container = await _storageService.GetInputBlobContainerClient();
 
@@ -30,13 +32,21 @@ internal sealed class AzureBlobStorageService
                     continue;
                 }
 
-                await blobClient.UploadAsync(
-                    stream,
-                    new BlobHttpHeaders
-                    {
-                        ContentType = "application/pdf"
-                    },
-                    cancellationToken: cancellationToken);
+                var permissionsJson = JsonSerializer.Serialize(permissions);  
+              
+                var uploadOptions = new BlobUploadOptions  
+                {  
+                    HttpHeaders = new BlobHttpHeaders  
+                    {  
+                        ContentType = "application/pdf"  
+                    },  
+                    Metadata = new Dictionary<string, string>  
+                    {  
+                        { IndexSection.PermissionsFieldName, permissionsJson }  
+                    }  
+                };  
+  
+                await blobClient.UploadAsync(stream, uploadOptions, cancellationToken);
 
                 uploadedFiles.Add(fileName);
             }

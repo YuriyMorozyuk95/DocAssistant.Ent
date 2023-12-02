@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using System.Net.Http.Headers;
+using Shared;
+using Shared.TableEntities;
 
 namespace ClientApp.Services;
 
@@ -26,6 +28,7 @@ public sealed class ApiClient
 
     public async Task<UploadDocumentsResponse> UploadDocumentsAsync(
         IReadOnlyList<IBrowserFile> files,
+        PermissionEntity[] permissions,
         long maxAllowedSize,
         string cookie)
     {
@@ -45,6 +48,11 @@ public sealed class ApiClient
                 content.Add(fileContent, file.Name, file.Name);
             }
 
+            // Add permissions
+            var serializedPermissions = JsonSerializer.Serialize(permissions);
+            var permissionsContent = new StringContent(serializedPermissions, Encoding.UTF8, "application/json");
+            content.Add(permissionsContent, "Permissions");
+
             // set cookie
             content.Headers.Add("X-CSRF-TOKEN-FORM", cookie);
             content.Headers.Add("X-CSRF-TOKEN-HEADER", cookie);
@@ -57,14 +65,15 @@ public sealed class ApiClient
                 await response.Content.ReadFromJsonAsync<UploadDocumentsResponse>();
 
             return result
-                ?? UploadDocumentsResponse.FromError(
-                    "Unable to upload files, unknown error.");
+                   ?? UploadDocumentsResponse.FromError(
+                       "Unable to upload files, unknown error.");
         }
         catch (Exception ex)
         {
             return UploadDocumentsResponse.FromError(ex.ToString());
         }
     }
+
 
     public async IAsyncEnumerable<DocumentResponse> GetDocumentsAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -162,5 +171,13 @@ public sealed class ApiClient
     {  
         var response = await _httpClient.PostAsJsonAsync("api/copilot-prompts", updatedData);  
         response.EnsureSuccessStatusCode();  
-    } 
+    }
+
+    public async Task<IndexCreationInfo> GetIndexCreationInfoAsync()  
+    {  
+        var response = await _httpClient.GetAsync("synchronize-status");  
+        response.EnsureSuccessStatusCode();  
+        return (await response.Content.ReadFromJsonAsync<IndexCreationInfo>())!;  
+    }  
+
 }

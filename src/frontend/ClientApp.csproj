@@ -21,14 +21,11 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="MudBlazor" />
     <PackageReference Include="System.Linq.Async" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\shared\Shared\Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,6 +34,10 @@
 
   <ItemGroup>
     <Folder Include="Properties\PublishProfiles\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\shared\Shared\Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

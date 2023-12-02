@@ -8,19 +8,19 @@
         </MudText>
     </MudDrawerHeader>
     <div class="pa-6">
+        <PermissionMultiSelect Label="Setup permissions for document(s)"
+                               IsEnabled=true
+                               @bind-SelectedItems="Settings.Overrides.SelectedPermissionList" />
+
         <MudTextField T="string" Lines="5" Variant="Variant.Outlined"
-                      Label="Override prompt template" Placeholder="Override prompt template" Class="pa-2"
-                      @bind-Value="Settings.Overrides.PromptTemplate" Clearable="true" />
+                      Label="Override prompt template" Placeholder="Override prompt template" Class="pa-2" Clearable="true"
+                      @bind-Value="Settings.Overrides.PromptTemplate"  />
                       
         <MudNumericField @bind-Value="Settings.Overrides.Top" Class="pa-2"
                          Placeholder="Retrieve this many documents from search"
                          Label="Retrieve this many documents from search" HideSpinButtons="true"
                          aria-label="Number input for the number of documents to search."
                          Variant="Variant.Outlined" Min="1" Max="50" />
-
-        <MudTextField T="string" Variant="Variant.Outlined"
-                      Label="Exclude category" Placeholder="Exclude category" Class="pa-2"
-                      @bind-Value="Settings.Overrides.ExcludeCategory" Clearable="true" />
 
         <MudCheckBox @bind-Checked="@Settings.Overrides.SemanticRanker" Size="Size.Large"
                      Color="Color.Primary" Label="Use semantic ranker for retrieval" />
@@ -51,12 +51,13 @@
         }
     </div>
     <div class="pa-6">
-        <MudTextField Lines="4" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.SearchPrompt" Label="Search Prompt" Multiline="true" />
-        <MudTextField Lines="4" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.CreateAnswer" Label="Create Answer" Multiline="true" />
-        <MudTextField Lines="4" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.CreateJsonPrompt" Label="Create Json Prompt" Multiline="true" />
-        <MudTextField Lines="4" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.CreateJsonPrompt2" Label="Create Json Prompt 2" Multiline="true" />
-        <MudTextField Lines="4" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.SystemFollowUp" Label="System Follow Up" Multiline="true" />
-        <MudTextField Lines="4" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.SystemFollowUpContent" Label="System Follow Up Content" Multiline="true" />
+        <MudText Typo="Typo.subtitle1">Setup prompts</MudText>
+        <MudTextField Lines="7" Class="pa-2" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.SearchPrompt" Label="Search Prompt" Multiline="true" />
+        <MudTextField Lines="7" Class="pa-2" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.CreateAnswer" Label="Create Answer" Multiline="true" />
+        <MudTextField Lines="7" Class="pa-2" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.CreateJsonPrompt" Label="Create Json Prompt" Multiline="true" />
+        <MudTextField Lines="7" Class="pa-2" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.CreateJsonPrompt2" Label="Create Json Prompt 2" Multiline="true" />
+        <MudTextField Lines="7" Class="pa-2" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.SystemFollowUp" Label="System Follow Up" Multiline="true" />
+        <MudTextField Lines="7" Class="pa-2" Variant="Variant.Outlined" Adornment="Adornment.End" Immediate="true" Clearable="true" @bind-Value="CopilotPrompts.SystemFollowUpContent" Label="System Follow Up Content" Multiline="true" />
 
         @* <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@OnClickBroadcastAsync">
             Update
@@ -69,7 +70,7 @@
                    Size="Size.Large"
                    StartIcon="@Icons.Material.Filled.Save"
                    aria-label="Update Prompts">
-            Close
+            Update Prompts
         </MudButton>
     </div>
     <div class="d-flex align-content-end flex-wrap flex-grow-1 pa-6">
