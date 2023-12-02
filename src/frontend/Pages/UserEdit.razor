@@ -1,40 +1,23 @@
-﻿  
-@page "/user-edit"  
-@page "/user-edit/{UserId}"  
+﻿@page "/user-edit"
+@page "/user-edit/{UserId}"
 
-@if (!Saved)  
-{  
-    <MudPaper Class="p-6">  
+@if (!Saved)
+{
+    <MudPaper Class="p-6">
         <MudText Typo="Typo.h4">Details for @User.FirstName @User.LastName</MudText>
 
-            <MudForm @ref="_form" Model="@User" OnValidSubmit="@HandleValidSubmitAsync">
+            <MudForm @ref="_form" Model="@User">
+                <MudTextField Label="Last name: " @bind-Value="@User.LastName" For="@(() => User.LastName)" />
+                <MudTextField Label="First name: " @bind-Value="@User.FirstName" For="@(() => User.FirstName)" />
+                <MudTextField Label="Email: " @bind-Value="@User.Email" For="@(() => User.Email)" />
 
-            @* @if (-?.Length > 0)  
-            {  
-                <MudFileInput Label="Select image: " OnChanged="OnInputFileChange" />  
-                @if (Employee.EmployeeId == 0)
-                {
-                    <div class="row mb-3">
-                        <label for="image" class="col-12 col-sm-3">Select image: </label>
-                        <div class="col-md-8">
-                            <InputFile OnChange="OnInputFileChange" />
-                        </div>
+                <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary" Class="mt-3 mr-2" OnClick="@HandleValidSubmitAsync">Save user</MudButton>
 
-                    </div>
-                }
-            } *@  
-  
-            <MudTextField Label="Last name: " @bind-Value="@User.LastName" For="@(() => User.LastName)" />  
-            <MudTextField Label="First name: " @bind-Value="@User.FirstName" For="@(() => User.FirstName)" />  
-            <MudTextField Label="Email: " @bind-Value="@User.Email" For="@(() => User.Email)" />
-
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-3 mr-2" OnClick="() => _form.Validate()">Save user</MudButton>
-
-            @if (User.Id?.Length > 0)  
+                @if (User.Id?.Length > 0)
             {
                 <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Secondary" Class="mt-3 mr-2" OnClick="@DeleteUserAsync">
-                    Delete  
-                </MudButton>  
+                    Delete
+                </MudButton>
             }
 
             <MudButton ButtonType="ButtonType.Button" Variant="Variant.Outlined" Color="Color.Primary" Class="mt-3 mr-2" OnClick="@NavigateToOverview">Back to overview</MudButton>

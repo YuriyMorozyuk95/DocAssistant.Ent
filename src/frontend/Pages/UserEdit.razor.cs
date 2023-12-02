@@ -51,7 +51,7 @@ public partial class UserEdit
     {
         Saved = false;
 
-        if (User.Id?.Length > 0) //new  
+        if (string.IsNullOrEmpty(User.Id)) //new  
         {
             var addedUser = await MockUserService.AddUser(User);
             if (addedUser != null)
