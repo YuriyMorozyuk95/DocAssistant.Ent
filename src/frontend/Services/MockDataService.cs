@@ -21,9 +21,9 @@ public class MockUserService
         var e1 = new UserEntity
         {
             Id = "1",
-            Email = "netflixhome2024@gmail.com",
+            Email = "olegsedliaruk8@gmail.com",
             FirstName = "Oleg",
-            LastName = "Sedlaruk",
+            LastName = "Sedliaruk",
             ImageUrl = "https://hacktogatherstorage.blob.core.windows.net/avatars/Oleg.jpg",
             Permissions = MockPermissionService.GetPermissions(),
         };
@@ -31,21 +31,21 @@ public class MockUserService
         var e2 = new UserEntity
         {
             Id = "2",
-            Email = "Victoria.naffato@gmail.com",
+            Email = "naffatovictoria@gmail.com",
             FirstName = "Victoria",
             LastName = "Naffato",
             ImageUrl = "https://hacktogatherstorage.blob.core.windows.net/avatars/Victoria.jpg",
-            Permissions = new List<PermissionEntity> { MockPermissionService.GetPermissionById("2"), MockPermissionService.GetPermissionById("3") },
+            Permissions = new List<PermissionEntity> { MockPermissionService.GetPermissionById("3") },
         };
 
         var e3 = new UserEntity
         {
             Id = "3",
-            Email = "Yuriy.Morozyuk.95@gmail.com",
+            Email = "yuriimoroziuk9@gmail.com",
             FirstName = "Yurii",
             LastName = "Moroziuk",
             ImageUrl = "https://hacktogatherstorage.blob.core.windows.net/avatars/Yurii.jpg",
-            Permissions = new List<PermissionEntity> { MockPermissionService.GetPermissionById("1") },
+            Permissions = new List<PermissionEntity> { MockPermissionService.GetPermissionById("2") },
         };
 
         return new List<UserEntity>() { e1, e2, e3 };
