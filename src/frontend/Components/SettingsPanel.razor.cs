@@ -10,15 +10,11 @@ public sealed partial class SettingsPanel : IDisposable
     private SupportedSettings _supportedSettings;
 
     [Inject] public required NavigationManager Nav { get; set; }
+    [Inject] public required AuthenticatedUserService AuthenticatedUserService { get; set; }
+    [Inject] public required IPermissionApiClient PermissionApiClient { get; set; }
 
     [Inject]
     public IUserApiClient UserApiClient { get; set; }
-
-    [Parameter]
-    public string? UserId { get; set; }
-
-    [Parameter]
-    public string? Email { get; set; }
 
     [Parameter]
     public required CopilotPromptsRequestResponse CopilotPrompts { get; set; } = new();  
@@ -48,16 +44,15 @@ public sealed partial class SettingsPanel : IDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        int.TryParse(UserId, out var userId);
+        var user = await AuthenticatedUserService.GetAuthenticatedUserAsync();
 
-        if (userId != 0)
+        if (user != null)
         {
-            var user = await UserApiClient.GetUserDetails(int.Parse(UserId), Email);
             Settings.Overrides.SelectedPermissionList = user.Permissions;
         }
         else
         {
-            Settings.Overrides.SelectedPermissionList = new List<PermissionEntity>();
+            Settings.Overrides.SelectedPermissionList = (await PermissionApiClient.GetAllPermissions()).ToList();
         }
 
         await base.OnInitializedAsync();

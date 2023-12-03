@@ -18,6 +18,6 @@ public sealed partial class UsersPage
 
     protected override async Task OnInitializedAsync()
     {
-        Users = (List<UserEntity>)await UserApiClient.GetAllUsers();
+        Users = (await UserApiClient.GetAllUsers()).ToList();
     }
 }

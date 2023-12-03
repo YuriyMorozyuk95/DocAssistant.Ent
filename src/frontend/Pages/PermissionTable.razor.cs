@@ -16,12 +16,10 @@ public sealed partial class PermissionTable
   
     private Task Create()  
     {
-        var lastId = _permissions?.Last()?.Id ?? 1.ToString();
-        lastId = lastId != null ? (int.Parse(lastId) + 1).ToString() : 1.ToString();
 
         var newPermission = new PermissionEntity()
         {   
-            Id = lastId,
+            Id = Guid.NewGuid().ToString(),
             Name = "New Permission",
         };
         _permissions.Add(newPermission);

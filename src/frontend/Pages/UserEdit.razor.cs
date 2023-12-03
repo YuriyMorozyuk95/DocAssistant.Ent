@@ -35,16 +35,14 @@ public partial class UserEdit
     {
         Saved = false;
 
-        int.TryParse(UserId, out var userId);
-
-        if (userId == 0) //new user is being created  
+        if (string.IsNullOrEmpty(Email)) //new user is being created  
         {
             //add some defaults  
             User = new UserEntity { };
         }
         else
         {
-            User = await UserApiClient.GetUserDetails(int.Parse(UserId), Email);
+            User = await UserApiClient.GetUserDetails(UserId, Email);
         }
     }
 
@@ -58,9 +56,8 @@ public partial class UserEdit
     {
         Saved = false;
 
-        if (string.IsNullOrEmpty(User.Id)) //new  
+        if (string.IsNullOrEmpty(User.Email)) //new  
         {
-            User.Id = (new Random()).Next().ToString();
             var addedUser = await UserApiClient.AddUser(User);
             if (addedUser != null)
             {

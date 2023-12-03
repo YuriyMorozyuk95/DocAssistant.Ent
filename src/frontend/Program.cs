@@ -29,6 +29,7 @@ builder.Services.AddHttpClient<IPermissionApiClient, PermissionApiClient>(client
 builder.Services.AddSingleton(x => new BlobServiceClient(builder.Configuration["BlobStorage"]));
 
 builder.Services.AddScoped<OpenAIPromptQueue>();
+builder.Services.AddTransient<AuthenticatedUserService>();
 builder.Services.AddLocalStorageServices();
 builder.Services.AddSessionStorageServices();
 builder.Services.AddSpeechSynthesisServices();
