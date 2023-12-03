@@ -175,9 +175,33 @@ public sealed class ApiClient
 
     public async Task<IndexCreationInfo> GetIndexCreationInfoAsync()  
     {  
-        var response = await _httpClient.GetAsync("synchronize-status");  
-        response.EnsureSuccessStatusCode();  
+        var response = await _httpClient.GetAsync("api/synchronize-status");  
+        response.EnsureSuccessStatusCode();
+        var stringResponse = await response.Content.ReadAsStringAsync();
         return (await response.Content.ReadFromJsonAsync<IndexCreationInfo>())!;  
-    }  
+    }
+
+    public async Task<string> UploadAvatarAsync(IBrowserFile file, string cookie)
+    {
+        using var content = new MultipartFormDataContent();
+        // max allow size: 10mb
+        var maxSize = 10 * 1024 * 1024;
+        var fileContent = new StreamContent(file.OpenReadStream(maxSize));
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+
+        content.Add(fileContent, "file", file.Name);
+
+        // set cookie
+        content.Headers.Add("X-CSRF-TOKEN-FORM", cookie);
+        content.Headers.Add("X-CSRF-TOKEN-HEADER", cookie);
+
+        var response = await _httpClient.PostAsync("api/upload-avatar", content);
+
+        response.EnsureSuccessStatusCode();
+
+        var stringResponse = await response.Content.ReadAsStringAsync();
+        return stringResponse;
+    }
+
 
 }

@@ -7,7 +7,7 @@ using Shared.TableEntities;
 
 namespace ClientApp.Pages;
 
-public sealed partial class Index : IDisposable
+public sealed partial class Documents : IDisposable
 {
     private const long MaxIndividualFileSize = 1_024L * 1_024;
 
@@ -51,7 +51,7 @@ public sealed partial class Index : IDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        _timer = new Timer(async _ => await LoadIndexCreationInfoAsync(), null, 0, 30000);
+        _timer = new Timer(async _ => await LoadIndexCreationInfoAsync(), null, 0, 2000);
 
         await LoadIndexCreationInfoAsync();
     }
@@ -66,7 +66,10 @@ public sealed partial class Index : IDisposable
         {
             _indexCreationInfo = new IndexCreationInfo();
         }
-        StateHasChanged(); // Notify Blazor that the state has changed and UI needs to be updated 
+        finally
+        {
+            StateHasChanged(); // Notify Blazor that the state has changed and UI needs to be updated 
+        }
     }
 
     private bool OnFilter(DocumentResponse document) => document is not null
