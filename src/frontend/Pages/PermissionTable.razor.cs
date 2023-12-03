@@ -11,7 +11,7 @@ public sealed partial class PermissionTable
 
     protected override async Task OnInitializedAsync()  
     {
-        _permissions = (List<PermissionEntity>)await PermissionApiClient.GetAllPermissions();  
+        _permissions = (await PermissionApiClient.GetAllPermissions()).ToList();  
     }  
   
     private Task Create()  

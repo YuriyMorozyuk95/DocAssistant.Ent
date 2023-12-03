@@ -6,21 +6,4 @@ public partial class UserCard
 {
     [Parameter]
     public UserEntity User { get; set; } = default!;
-
-    [Inject]
-    public NavigationManager NavigationManager { get; set; }
-
-    protected override void OnInitialized()
-    {
-        //TODO update validation
-        //if (string.IsNullOrEmpty(User.LastName))
-        //{
-        //    throw new Exception("Last name can't be empty");
-        //}
-    }
-
-    public void NavigateToDetails(UserEntity selectedUser)
-    {
-        NavigationManager.NavigateTo($"/user-edit/{selectedUser.Id}");
-    }
 }

@@ -22,7 +22,7 @@ public sealed partial class PermissionMultiSelect
 
     protected override async Task OnInitializedAsync()  
     {
-        _items = (List<PermissionEntity>)await PermissionApiClient.GetAllPermissions();
+        _items = (await PermissionApiClient.GetAllPermissions()).ToList();
     }  
 
     private async Task OnSelectedItemsChangedAsync(IEnumerable<PermissionEntity> arg)

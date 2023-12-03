@@ -1,7 +1,4 @@
-﻿using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
-
-using Shared.TableEntities;
+﻿using Shared.TableEntities;
 
 namespace ClientApp.Pages;
 
