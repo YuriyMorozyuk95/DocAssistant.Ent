@@ -42,6 +42,7 @@ public class PermissionRepository : IPermissionRepository
     {
         foreach (var permission in permissions)
         {
+            permission.PartitionKey = permission.Id;
             await _container.UpsertItemAsync(permission, new PartitionKey(permission.Id));
         }
     }

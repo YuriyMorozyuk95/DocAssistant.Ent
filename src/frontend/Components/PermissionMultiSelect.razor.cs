@@ -6,6 +6,8 @@ namespace ClientApp.Components;
 
 public sealed partial class PermissionMultiSelect
 {
+    [Inject]
+    public PermissionApiClient PermissionApiClient { get; set; }
     [Parameter]
     public List<PermissionEntity> SelectedItems { get; set; } = new List<PermissionEntity>();
     [Parameter]  
@@ -19,8 +21,10 @@ public sealed partial class PermissionMultiSelect
     private List<PermissionEntity> _items;
 
     protected override async Task OnInitializedAsync()  
-    {  
-        _items = MockPermissionService.GetPermissions();  
+    {
+        var perm = MockPermissionService.GetPermissions();
+        await PermissionApiClient.SaveChanges(perm);
+        _items = (List<PermissionEntity>)await PermissionApiClient.GetAllPermissions();
     }  
 
     private async Task OnSelectedItemsChangedAsync(IEnumerable<PermissionEntity> arg)

@@ -5,7 +5,7 @@ using Shared.TableEntities;
 namespace DocAssistant.Data.Interfaces;
 public interface IUserRepository
 {
-    Task<UserEntity> GetUserByIdAsync(string userId);
+    Task<UserEntity> GetUserByIdAsync(string userId, string email);
 
     Task<UserEntity> AddUserAsync(UserEntity user);
 
@@ -15,6 +15,6 @@ public interface IUserRepository
 
     Task SaveUsersAsync(IEnumerable<UserEntity> users);
 
-    Task DeleteUserAsync(string id);
+    Task DeleteUserAsync(string id, string email);
 
 }

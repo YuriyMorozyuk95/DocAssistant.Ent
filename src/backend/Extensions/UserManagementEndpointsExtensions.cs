@@ -11,11 +11,11 @@ internal static class UserManagementEndpointsExtensions
     {
         // User management endpoints  
         api.MapGet("users", OnGetAllUsersAsync);    
-        api.MapGet("users/{userId}", OnGetUserDetailsAsync);    
+        api.MapGet("users/{userId}/email/{email}", OnGetUserDetailsAsync);    
         api.MapPut("users/{userId}", OnUpdateUserAsync);
         api.MapPut("users", OnSaveChangesAsync);
         api.MapPost("users", OnAddUserAsync);
-        api.MapDelete("users/{userId}", OnDeleteUserAsync);  
+        api.MapDelete("users/{userId}/email/{email}", OnDeleteUserAsync);  
     }
 
     private static async Task OnUpdateUserAsync(HttpContext context, IUserRepository repository)
@@ -35,7 +35,8 @@ internal static class UserManagementEndpointsExtensions
     private static async Task OnGetUserDetailsAsync(HttpContext context, IUserRepository repository)
     {
         var userId = context.Request.RouteValues["userId"]?.ToString();
-        var permissions = await repository.GetUserByIdAsync(userId);
+        var email = context.Request.RouteValues["email"]?.ToString();
+        var permissions = await repository.GetUserByIdAsync(userId, email);
         await context.Response.WriteAsJsonAsync(permissions);
     }
 
@@ -48,7 +49,8 @@ internal static class UserManagementEndpointsExtensions
     private static async Task OnDeleteUserAsync(HttpContext context, IUserRepository repository)
     {
         var userId = context.Request.RouteValues["userId"]?.ToString();
-        await repository.DeleteUserAsync(userId);
+        var email = context.Request.RouteValues["email"]?.ToString();
+        await repository.DeleteUserAsync(userId, email);
 
         context.Response.StatusCode = StatusCodes.Status204NoContent;
     }

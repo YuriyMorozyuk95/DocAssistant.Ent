@@ -18,14 +18,15 @@ public class UserRepository : IUserRepository
     {
 
         user.Id = Guid.NewGuid().ToString();
-        var response = await _container.CreateItemAsync(user, new PartitionKey(user.Username));
+        user.PartitionKey = user.Email;
+        var response = await _container.CreateItemAsync(user, new PartitionKey(user.Email));
 
         return response.Resource;
     }
 
-    public async Task<UserEntity> GetUserByIdAsync(string userId)
+    public async Task<UserEntity> GetUserByIdAsync(string userId, string email)
     {
-        var response = await _container.ReadItemAsync<UserEntity>(userId, new PartitionKey(userId));
+        var response = await _container.ReadItemAsync<UserEntity>(userId, new PartitionKey(email));
         return response.Resource;
     }
 
@@ -44,19 +45,20 @@ public class UserRepository : IUserRepository
 
     public async Task UpdateUserAsync(UserEntity user)
     {
-        await _container.UpsertItemAsync(user, new PartitionKey(user.Id));
+        await _container.UpsertItemAsync(user, new PartitionKey(user.Email));
     }
 
     public async Task SaveUsersAsync(IEnumerable<UserEntity> users)
     {
         foreach (var user in users)
         {
-            await _container.UpsertItemAsync(user, new PartitionKey(user.Id));
+            user.PartitionKey = user.Email;
+            await _container.UpsertItemAsync(user, new PartitionKey(user.Email));
         }
     }
 
-    public async Task DeleteUserAsync(string id)
+    public async Task DeleteUserAsync(string id, string email)
     {
-        await _container.DeleteItemAsync<UserEntity>(id, new PartitionKey(id));
+        await _container.DeleteItemAsync<UserEntity>(id, new PartitionKey(email));
     }
 }

@@ -4,11 +4,14 @@ namespace ClientApp.Pages;
 
 public sealed partial class PermissionTable
 {
-    private List<PermissionEntity> _permissions;  
-  
-    protected override void OnInitialized()  
+    private List<PermissionEntity> _permissions;
+
+    [Inject]
+    public PermissionApiClient PermissionApiClient { get; set; }
+
+    protected override async Task OnInitializedAsync()  
     {  
-        _permissions = MockPermissionService.GetPermissions();  
+        _permissions = (List<PermissionEntity>)await PermissionApiClient.GetAllPermissions();  
     }  
   
     private Task Create()  
@@ -31,10 +34,9 @@ public sealed partial class PermissionTable
         return Task.CompletedTask;
     }
 
-    private Task SaveChanges()
+    private async Task SaveChangesAsync()
     {
-        MockPermissionService.SaveChanges(_permissions);
-        return Task.CompletedTask;
+        await PermissionApiClient.SaveChanges(_permissions);
     }
 
     private Task Update(PermissionEntity context)

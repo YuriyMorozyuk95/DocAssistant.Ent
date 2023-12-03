@@ -7,10 +7,10 @@ namespace ClientApp.Services;
 public interface IUserApiClient
 {
     Task<IEnumerable<UserEntity>> GetAllUsers();
-    Task<UserEntity> GetUserDetails(int userId);
+    Task<UserEntity> GetUserDetails(int userId, string email);
     Task<UserEntity> AddUser(UserEntity user);
     Task UpdateUser(UserEntity user);
-    Task DeleteUser(string userId);
+    Task DeleteUser(string userId, string email);
     Task SaveChanges(IEnumerable<UserEntity> users);
 }
 
@@ -36,9 +36,9 @@ public class UserApiClient : IUserApiClient
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task<UserEntity> GetUserDetails(int userId)  
+    public async Task<UserEntity> GetUserDetails(int userId, string email)  
     {  
-        var response = await _httpClient.GetAsync($"api/users/{userId}");  
+        var response = await _httpClient.GetAsync($"api/users/{userId}/email/{email}");  
         response.EnsureSuccessStatusCode();  
         return await response.Content.ReadFromJsonAsync<UserEntity>();  
     }
@@ -56,9 +56,9 @@ public class UserApiClient : IUserApiClient
         response.EnsureSuccessStatusCode();  
     }  
   
-    public async Task DeleteUser(string userId)  
+    public async Task DeleteUser(string userId, string email)  
     {  
-        var response = await _httpClient.DeleteAsync($"api/users/{userId}");  
+        var response = await _httpClient.DeleteAsync($"api/users/{userId}/email/{email}");  
         response.EnsureSuccessStatusCode();  
     }  
 }  

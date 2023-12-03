@@ -9,12 +9,14 @@ public partial class UserEdit
     [Inject]
     public NavigationManager NavigationManager { get; set; }
 
-    //TODO user instead of MockDataService
     [Inject]
-    public UserApiClient UserApiClient { get; set; }
+    public IUserApiClient UserApiClient { get; set; }
 
     [Parameter]
     public string? UserId { get; set; }
+
+    [Parameter]
+    public string? Email { get; set; }
 
     public UserEntity User { get; set; } = new UserEntity();
 
@@ -28,11 +30,6 @@ public partial class UserEdit
     {
         Saved = false;
 
-           // var us = await UserApiClient.GetAllUsers();
-
-        var users = MockUserService.InitializeMockUsers();
-        await UserApiClient.SaveChanges(users);
-
         int.TryParse(UserId, out var userId);
 
         if (userId == 0) //new user is being created  
@@ -42,7 +39,8 @@ public partial class UserEdit
         }
         else
         {
-            User = await MockUserService.GetUserDetails(int.Parse(UserId));
+            // todo fufill in table
+            User = await UserApiClient.GetUserDetails(int.Parse(UserId), Email);
         }
     }
 
@@ -58,7 +56,7 @@ public partial class UserEdit
 
         if (string.IsNullOrEmpty(User.Id)) //new  
         {
-            var addedUser = await MockUserService.AddUser(User);
+            var addedUser = await UserApiClient.AddUser(User);
             if (addedUser != null)
             {
                 StatusClass = "alert-success";
@@ -74,7 +72,7 @@ public partial class UserEdit
         }
         else
         {
-            await MockUserService.UpdateUser(User);
+            await UserApiClient.UpdateUser(User);
             StatusClass = "alert-success";
             Message = "User updated successfully.";
             Saved = true;
@@ -89,7 +87,7 @@ public partial class UserEdit
 
     protected async Task DeleteUserAsync()
     {
-        await MockUserService.DeleteUser(User.Id);
+        await UserApiClient.DeleteUser(User.Id, User.Email);
 
         StatusClass = "alert-success";
         Message = "Deleted successfully";
