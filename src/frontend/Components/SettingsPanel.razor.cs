@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using Shared.TableEntities;
+
 namespace ClientApp.Components;
 
 public sealed partial class SettingsPanel : IDisposable
@@ -8,6 +10,15 @@ public sealed partial class SettingsPanel : IDisposable
     private SupportedSettings _supportedSettings;
 
     [Inject] public required NavigationManager Nav { get; set; }
+
+    [Inject]
+    public IUserApiClient UserApiClient { get; set; }
+
+    [Parameter]
+    public string? UserId { get; set; }
+
+    [Parameter]
+    public string? Email { get; set; }
 
     [Parameter]
     public required CopilotPromptsRequestResponse CopilotPrompts { get; set; } = new();  
@@ -35,12 +46,21 @@ public sealed partial class SettingsPanel : IDisposable
     [Parameter] public EventCallback<bool> OpenChanged { get; set; }
     [Parameter] public EventCallback<bool> UpdateButtonClicked { get; set; }
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-        //TODO read from User
-        Settings.Overrides.SelectedPermissionList = MockPermissionService.GetPermissions(); 
+        int.TryParse(UserId, out var userId);
 
-        return base.OnInitializedAsync();
+        if (userId != 0)
+        {
+            var user = await UserApiClient.GetUserDetails(int.Parse(UserId), Email);
+            Settings.Overrides.SelectedPermissionList = user.Permissions;
+        }
+        else
+        {
+            Settings.Overrides.SelectedPermissionList = new List<PermissionEntity>();
+        }
+
+        await base.OnInitializedAsync();
     }
 
     protected override void OnInitialized() => Nav.LocationChanged += HandleLocationChanged;

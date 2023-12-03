@@ -2,7 +2,7 @@
     <MudCardContent>
         <MudText Typo="Typo.subtitle1">@User.FirstName @User.LastName</MudText>
             <div class="mb-3">
-                <img src="@User.ImageUrl" class="employee-img rounded-circle img-fluid" />
+                <img src="@User.ImageUrl" class="employee-img rounded-circle img-fluid" style="width: 250px" />
             </div>
             <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" Link="@($"user-edit/{User.Id}")">Full details</MudButton>
         </MudCardContent>

@@ -39,7 +39,6 @@ public partial class UserEdit
         }
         else
         {
-            // todo fufill in table
             User = await UserApiClient.GetUserDetails(int.Parse(UserId), Email);
         }
     }

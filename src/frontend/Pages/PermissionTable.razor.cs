@@ -7,10 +7,10 @@ public sealed partial class PermissionTable
     private List<PermissionEntity> _permissions;
 
     [Inject]
-    public PermissionApiClient PermissionApiClient { get; set; }
+    public IPermissionApiClient PermissionApiClient { get; set; }
 
     protected override async Task OnInitializedAsync()  
-    {  
+    {
         _permissions = (List<PermissionEntity>)await PermissionApiClient.GetAllPermissions();  
     }  
   
