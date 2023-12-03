@@ -175,8 +175,9 @@ public sealed class ApiClient
 
     public async Task<IndexCreationInfo> GetIndexCreationInfoAsync()  
     {  
-        var response = await _httpClient.GetAsync("synchronize-status");  
-        response.EnsureSuccessStatusCode();  
+        var response = await _httpClient.GetAsync("api/synchronize-status");  
+        response.EnsureSuccessStatusCode();
+        var stringResponse = await response.Content.ReadAsStringAsync();
         return (await response.Content.ReadFromJsonAsync<IndexCreationInfo>())!;  
     }
 

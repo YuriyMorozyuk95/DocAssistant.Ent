@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using Azure.Storage.Blobs;
+
 using ClientApp.Services;
 using Shared.TableEntities;
 
@@ -24,7 +26,7 @@ internal static class WebApplicationExtensions
         api.MapPost("synchronize", OnPostSynchronizeAsync);
 
         // Get synchronize status  
-        api.MapGet("synchronize-status", () => IndexCreationInformation.IndexCreationInfo);
+        api.MapGet("synchronize-status", OnGetIndexCreationInfo);
 
         api.MapGet("enableLogout", OnGetEnableLogout);
 
@@ -38,6 +40,12 @@ internal static class WebApplicationExtensions
         api.MapPermissionManagementApi();
 
         return app;
+    }
+
+    private static Task<IResult> OnGetIndexCreationInfo()
+    {
+        var response = IndexCreationInformation.IndexCreationInfo;
+        return Task.FromResult(Results.Ok(response));
     }
 
     private static async Task<IResult> OnPostAvatarAsync(

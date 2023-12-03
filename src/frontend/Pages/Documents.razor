@@ -3,57 +3,59 @@
 <PageTitle>Documents</PageTitle>
 
 <MudGrid Justify="Justify.Center">
-    <MudItem xs="12">  
-        <MudCard>  
-            <MudCardContent>  
-                <MudText Typo="Typo.h5">Index Creation Information</MudText>  
-                <MudText>Last Index Status: @_indexCreationInfo.LastIndexStatus.ToString()</MudText>  
-                <MudText>Last Index Error Message: @_indexCreationInfo.LastIndexErrorMessage</MudText>  
-                <MudText>Chunks Processed: @_indexCreationInfo.ChunksProcessed</MudText>  
-                <MudText>Documents Processed: @_indexCreationInfo.DocumentProcessed</MudText>  
-            </MudCardContent>  
-            <MudCardHeader>
-                <MudButton HtmlTag="label"
-                           Variant="Variant.Filled"
-                           StartIcon="@Icons.Material.Filled.CloudUpload"
-                           Size="Size.Large"
-                           OnClick="@(async () => await SynchronizeDocumentsAsync())">
-                    Synchronizing Index Documents
-                </MudButton>
-            </MudCardHeader>
-        </MudCard>  
-    </MudItem>
-    <MudItem id="uploads" xs="12" Class="overflow-x-auto">
+    <MudItem xs="12">
         <MudCard>
-            <MudForm @ref="@_form">
+            <MudCardContent>
+                <MudText Typo="Typo.h5">Synchronizing index information</MudText>
+                <MudText>Last Index Status: @_indexCreationInfo.LastIndexStatus.ToString()</MudText>
+                    <MudText>Last Index Error Message: @_indexCreationInfo.LastIndexErrorMessage</MudText>
+                    <MudText>Documents Pages Processed: @_indexCreationInfo.DocumentPageProcessed</MudText>
+                    <MudText>Total Documents Pages Processed: @_indexCreationInfo.TotalPageCount</MudText>
+                    <MudText>Chunks Processed: @_indexCreationInfo.ChunksProcessed</MudText>
+                    <MudProgressLinear Size="Size.Large" Color="Color.Tertiary" Buffer="true" Value="@_indexCreationInfo.DocumentPageProcessed" BufferValue="@_indexCreationInfo.DocumentPageProcessedBuffer" Max="@_indexCreationInfo.TotalPageCount" Class="my-7" />
+                </MudCardContent>
                 <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h5">Upload Documents</MudText>
-                    </CardHeaderContent>
+                    <MudButton HtmlTag="label"
+                               Variant="Variant.Filled"
+                               StartIcon="@Icons.Material.Filled.CloudUpload"
+                               Size="Size.Large"
+                               OnClick="@(async () => await SynchronizeDocumentsAsync())">
+                        Synchronizing Index Documents
+                    </MudButton>
                 </MudCardHeader>
-                <MudCardContent>
-                    <MudText Class="pb-4">
-                        Select up to ten PDF documents to upload, or explore the existing documents that have already been processed.
-                        Each file cannot exceed a file size of @(MaxIndividualFileSize.ToHumanReadableSize())
-                    </MudText>
-                    <MudFileUpload @ref="_fileUpload" T="IReadOnlyList<IBrowserFile>"
-                                   Accept=".pdf" MaximumFileCount="10" FilesChanged=@(files => StateHasChanged())
-                                   Required="true" RequiredError="You must select at least one PDF file to upload.">
-                        <ButtonTemplate>
-                            <MudButton HtmlTag="label"
-                                       Variant="Variant.Filled"
-                                       StartIcon="@Icons.Material.Filled.FileOpen"
-                                       Size="Size.Large"
-                                       for="@context">
-                                Select PDF Documents
-                            </MudButton>
-                            <PermissionMultiSelect Label="Setup permissions for document(s)"
-                                                   IsEnabled=@FilesSelected
-                                                   @bind-SelectedItems="_selectedPermissionsForDoc" />
-                        </ButtonTemplate>
-                        <SelectedTemplate>
-                            <MudExpansionPanels Class="pt-4" Elevation=2>
-                                @{
+            </MudCard>
+        </MudItem>
+        <MudItem id="uploads" xs="12" Class="overflow-x-auto">
+            <MudCard>
+                <MudForm @ref="@_form">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h5">Upload Documents</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Class="pb-4">
+                            Select up to ten PDF documents to upload, or explore the existing documents that have already been processed.
+                            Each file cannot exceed a file size of @(MaxIndividualFileSize.ToHumanReadableSize())
+                        </MudText>
+                        <MudFileUpload @ref="_fileUpload" T="IReadOnlyList<IBrowserFile>"
+                                       Accept=".pdf" MaximumFileCount="10" FilesChanged=@(files => StateHasChanged())
+                                       Required="true" RequiredError="You must select at least one PDF file to upload.">
+                            <ButtonTemplate>
+                                <MudButton HtmlTag="label"
+                                           Variant="Variant.Filled"
+                                           StartIcon="@Icons.Material.Filled.FileOpen"
+                                           Size="Size.Large"
+                                           for="@context">
+                                    Select PDF Documents
+                                </MudButton>
+                                <PermissionMultiSelect Label="Setup permissions for document(s)"
+                                                       IsEnabled=@FilesSelected
+                                                       @bind-SelectedItems="_selectedPermissionsForDoc" />
+                            </ButtonTemplate>
+                            <SelectedTemplate>
+                                <MudExpansionPanels Class="pt-4" Elevation=2>
+                                    @{
                                     var enabled = context is { Count: > 0 };
                                     var size = enabled ? context.Sum(f => f.Size) : 0;
                                 }
@@ -156,6 +158,11 @@
                         Name
                     </MudTableSortLabel>
                 </MudTh>
+                <MudTh Style="text-align:center">
+                    <MudTableSortLabel SortBy="new Func<DocumentResponse, object>(d => d.Permissions)">
+                        Permission
+                    </MudTableSortLabel>
+                </MudTh>
                 <MudTh>Content Type</MudTh>
                 <MudTh>
                     <MudTableSortLabel SortBy="new Func<DocumentResponse, object>(d => d.Size)">
@@ -191,6 +198,20 @@
                 </MudTd>
                 <MudTd DataLabel="Name">
                     <strong>@context.Name</strong>
+                </MudTd>
+                <MudTd DataLabel="Permissions">
+                    @if (string.IsNullOrEmpty(@context.Permissions))
+                    {
+                        <MudChip Size="Size.Small">
+                            No permissions
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudChip Size="Size.Small">
+                            @context.Permissions
+                        </MudChip>
+                    }
                 </MudTd>
                 <MudTd DataLabel="Content Type">
                     <code>@context.ContentType</code>
