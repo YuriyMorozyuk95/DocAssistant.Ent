@@ -1,11 +1,14 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using System.IO;
 using System.Threading;
 
 using Azure;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
+
 using Newtonsoft.Json;
+
 using Shared.TableEntities;
 
 namespace MinimalApi.Services;
@@ -37,7 +40,7 @@ public class UploaderDocumentService : IUploaderDocumentService
         _storageService = storageService;
     }
 
-    public async IAsyncEnumerable<DocumentResponse> GetDocuments([EnumeratorCancellation]CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<DocumentResponse> GetDocuments([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var container = await _storageService.GetInputBlobContainerClient();
         await foreach (var blob in container.GetBlobsAsync(cancellationToken: cancellationToken))
@@ -49,8 +52,8 @@ public class UploaderDocumentService : IUploaderDocumentService
                 var builder = new UriBuilder(baseUri);
                 builder.Path += $"/{blob.Name}";
 
-                BlobClient blobClient = container.GetBlobClient(blob.Name);  
-                Response<BlobProperties> response = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);  
+                BlobClient blobClient = container.GetBlobClient(blob.Name);
+                Response<BlobProperties> response = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
                 IDictionary<string, string> metadata = response.Value.Metadata;
 
                 var documentProcessingStatus = GetMetadataEnumOrDefault(
@@ -63,6 +66,14 @@ public class UploaderDocumentService : IUploaderDocumentService
                     nameof(EmbeddingType),
                     EmbeddingType.AzureSearch);
 
+                string permissionsString = string.Empty;
+                if (metadata.TryGetValue("permissions", out var permissionsJson))
+                {
+                    var permissions = JsonConvert.DeserializeObject<PermissionEntity[]>(permissionsJson);
+                    var permissionsList = permissions.Select(p => p.Name).ToArray();
+                    permissionsString = string.Join(", ", permissionsList);
+                }
+
                 yield return new DocumentResponse(
                     blob.Name,
                     props.ContentType,
@@ -70,7 +81,8 @@ public class UploaderDocumentService : IUploaderDocumentService
                     props.LastModified,
                     builder.Uri,
                     documentProcessingStatus,
-                    embeddingType);
+                    embeddingType,
+                    permissionsString);
             }
         }
     }
@@ -78,81 +90,110 @@ public class UploaderDocumentService : IUploaderDocumentService
     public async Task UploadToAzureIndex()
     {
         IndexCreationInformation.IndexCreationInfo.ChunksProcessed = 0;
-        IndexCreationInformation.IndexCreationInfo.DocumentProcessed = 0;
+        IndexCreationInformation.IndexCreationInfo.DocumentPageProcessed = 0;
         IndexCreationInformation.IndexCreationInfo.LastIndexErrorMessage = string.Empty;
         IndexCreationInformation.IndexCreationInfo.LastIndexStatus = IndexStatus.Processing;
 
-        var searchIndexName = _configuration["AzureSearchIndex"];
-        var embeddingModel = _configuration["AzureOpenAiEmbeddingDeployment"];
-
-        var consoleAppOptions = new UploaderOptions();
-        _configuration.GetSection("UploaderOptions").Bind(consoleAppOptions);
-
-        _logger?.LogInformation("Deleting '{searchIndexName}' search index", searchIndexName);
-
-        await _azureSearchEmbedService.RemoveSearchIndex(searchIndexName!);
-        await _azureSearchEmbedService.CreateSearchIndex(searchIndexName!);
-
-        var inputContainer = await _storageService.GetInputBlobContainerClient();
-
-        await foreach (var document in GetDocuments())
+        try
         {
-            IndexCreationInformation.IndexCreationInfo.DocumentProcessed++;
+            var searchIndexName = _configuration["AzureSearchIndex"];
+            var embeddingModel = _configuration["AzureOpenAiEmbeddingDeployment"];
 
-            var fileName = document.Name;
-            var blobClient = inputContainer.GetBlobClient(document.Name);
+            var consoleAppOptions = new UploaderOptions();
+            _configuration.GetSection("UploaderOptions").Bind(consoleAppOptions);
+
+            _logger?.LogInformation("Deleting '{searchIndexName}' search index", searchIndexName);
+
+            await _azureSearchEmbedService.RemoveSearchIndex(searchIndexName!);
+            await _azureSearchEmbedService.CreateSearchIndex(searchIndexName!);
+
+            var inputContainer = await _storageService.GetInputBlobContainerClient();
+            var pageCount = await CalculateTotalDocumentsPagesAsync(inputContainer);
+            IndexCreationInformation.IndexCreationInfo.TotalPageCount = pageCount;
+
+            await foreach (var document in GetDocuments())
+            {
+
+                var fileName = document.Name;
+                var blobClient = inputContainer.GetBlobClient(document.Name);
+
+                var stream = await GetBlobStreamAsync(blobClient);
+                if (!stream.CanRead || !stream.CanSeek)
+                {
+                    throw new NotSupportedException("The stream must be readable and seekable.");
+                }
+
+                string[] permissionsList = Array.Empty<string>();
+                //Deserialize the permissions metadata to a list of strings
+                BlobProperties properties = await blobClient.GetPropertiesAsync();
+                var metadata = properties.Metadata;
+
+
+                if (metadata.TryGetValue(IndexSection.PermissionsFieldName, out string permissionsJson))
+                {
+                    var permissions = JsonConvert.DeserializeObject<PermissionEntity[]>(permissionsJson);
+                    permissionsList = permissions.Select(p => p.Name).ToArray();
+                }
+
+                using var documents = PdfReader.Open(stream, PdfDocumentOpenMode.Import);
+
+                for (int i = 0; i < documents.PageCount; i++)
+                {
+                    IndexCreationInformation.IndexCreationInfo.DocumentPageProcessed++;
+
+                    var chunkName = BlobNameFromFilePage(fileName, i);
+                    var tempFileName = Path.GetTempFileName();
+
+                    try
+                    {
+                        using var pdfDocument = new PdfDocument();
+                        pdfDocument.AddPage(documents.Pages[i]);
+                        pdfDocument.Save(tempFileName);
+                        await using var tempStream = File.OpenRead(tempFileName);
+
+                        await _azureSearchEmbedService.EmbedBlob(tempStream, chunkName, searchIndexName!, embeddingModel!, document.Url, permissionsList);
+                    }
+                    catch (Exception ex)
+                    {
+                        IndexCreationInformation.IndexCreationInfo.LastIndexErrorMessage = ex.Message;
+                        IndexCreationInformation.IndexCreationInfo.LastIndexStatus = IndexStatus.Failed;
+                    }
+                    finally
+                    {
+                        File.Delete(tempFileName);
+                    }
+                }
+
+                metadata[nameof(DocumentProcessingStatus)] = DocumentProcessingStatus.Succeeded.ToString();
+                metadata[nameof(EmbeddingType)] = EmbeddingType.AzureSearch.ToString();
+
+                await blobClient.SetMetadataAsync(metadata);
+
+            }
+        }
+        catch (Exception ex)
+        {
+            IndexCreationInformation.IndexCreationInfo.LastIndexErrorMessage = ex.Message;
+            IndexCreationInformation.IndexCreationInfo.LastIndexStatus = IndexStatus.Failed;
+        }
+
+        IndexCreationInformation.IndexCreationInfo.LastIndexStatus = IndexStatus.Succeeded;
+    }
+
+    private async Task<int> CalculateTotalDocumentsPagesAsync(BlobContainerClient containerClient)
+    {
+        int counter = 0;
+        await foreach (var doc in GetDocuments())
+        {
+            var blobClient = containerClient.GetBlobClient(doc.Name);
 
             var stream = await GetBlobStreamAsync(blobClient);
-            if (!stream.CanRead || !stream.CanSeek)
-            {
-                throw new NotSupportedException("The stream must be readable and seekable.");
-            }
-
-            string[] permissionsList = Array.Empty<string>();
-            //Deserialize the permissions metadata to a list of strings
-            BlobProperties properties = await blobClient.GetPropertiesAsync();
-            var metadata = properties.Metadata;
-
-
-            if(metadata.TryGetValue(IndexSection.PermissionsFieldName, out string permissionsJson))
-            {
-                var permissions = JsonConvert.DeserializeObject<PermissionEntity[]>(permissionsJson);
-                permissionsList = permissions.Select(p => p.Name).ToArray();
-            }
 
             using var documents = PdfReader.Open(stream, PdfDocumentOpenMode.Import);
-
-            for (int i = 0; i < documents.PageCount; i++)
-            {
-
-                var chunkName = BlobNameFromFilePage(fileName, i);
-                var tempFileName = Path.GetTempFileName();
-
-                try
-                {
-                    using var pdfDocument = new PdfDocument();
-                    pdfDocument.AddPage(documents.Pages[i]);
-                    pdfDocument.Save(tempFileName);
-                    await using var tempStream = File.OpenRead(tempFileName);
-
-                    await _azureSearchEmbedService.EmbedBlob(tempStream, chunkName, searchIndexName!, embeddingModel!, document.Url, permissionsList);
-                }
-                catch(Exception ex)
-                {
-                    IndexCreationInformation.IndexCreationInfo.LastIndexErrorMessage = ex.Message;
-                    IndexCreationInformation.IndexCreationInfo.LastIndexStatus = IndexStatus.Failed;
-                }
-                finally
-                {
-                    File.Delete(tempFileName);
-                }
-            }
-
-            metadata[nameof(DocumentProcessingStatus)] = DocumentProcessingStatus.Succeeded.ToString();
-            metadata[nameof(EmbeddingType)] = EmbeddingType.AzureSearch.ToString();
-
-            await blobClient.SetMetadataAsync(metadata);
+            counter += documents.PageCount;
         }
+
+        return counter;
     }
 
 
@@ -162,10 +203,10 @@ public class UploaderDocumentService : IUploaderDocumentService
         {
             BlobDownloadInfo download = await blobClient.DownloadAsync();
 
-            var memoryStream = new MemoryStream();  
-            await download.Content.CopyToAsync(memoryStream);  
-            memoryStream.Position = 0;  
-            return memoryStream; 
+            var memoryStream = new MemoryStream();
+            await download.Content.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+            return memoryStream;
         }
         else
         {

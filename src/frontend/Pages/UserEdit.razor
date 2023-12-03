@@ -12,9 +12,22 @@
                 <MudTextField Label="Email: " @bind-Value="@User.Email" For="@(() => User.Email)" />
                 <PermissionMultiSelect Label="Permissions: " @bind-SelectedItems="@User.Permissions" IsEnabled=true />
 
+                <MudFileUpload T="IBrowserFile" FilesChanged="UploadFilesAsync">
+                    <ButtonTemplate>
+                        <MudButton HtmlTag="label"
+                                   for="@context"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Secondary"  
+                                   StartIcon="@Icons.Material.Filled.Image" >
+                            Upload avatar
+                        </MudButton>
+                    </ButtonTemplate>  
+                </MudFileUpload>
+                <MudTextField Label="Image URL: " @bind-Value="@User.ImageUrl" For="@(() => User.ImageUrl)" ReadOnly="true" />
+
                 <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary" Class="mt-3 mr-2" OnClick="@HandleValidSubmitAsync">Save user</MudButton>
 
-                @if (User.Id?.Length > 0)
+            @if (User.Id?.Length > 0)
             {
                 <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Secondary" Class="mt-3 mr-2" OnClick="@DeleteUserAsync">
                     Delete

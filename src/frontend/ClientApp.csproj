@@ -13,6 +13,7 @@
 
 
   <ItemGroup>
+    <PackageReference Include="Azure.Storage.Blobs" />
     <PackageReference Include="Blazor.LocalStorage.WebAssembly" />
     <PackageReference Include="Blazor.SessionStorage.WebAssembly" />
     <PackageReference Include="Blazor.SpeechRecognition.WebAssembly" />
@@ -42,6 +43,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="wwwroot\appsettings.Test.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Update="wwwroot\appsettings.Development.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using Azure.Storage.Blobs;
+
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
 builder.RootComponents.Add<App>("#app");
@@ -23,6 +25,8 @@ builder.Services.AddHttpClient<IPermissionApiClient, PermissionApiClient>(client
     var baseUrl = builder.Configuration["AppSettings:BACKEND_URI"];
     client.BaseAddress = new Uri(baseUrl);
 });
+
+builder.Services.AddSingleton(x => new BlobServiceClient(builder.Configuration["BlobStorage"]));
 
 builder.Services.AddScoped<OpenAIPromptQueue>();
 builder.Services.AddLocalStorageServices();

@@ -8,12 +8,14 @@ public class IndexCreationInfo
     {
         LastIndexStatus = IndexStatus.NotStarted;
         ChunksProcessed = 0;
-        DocumentProcessed = 0;
+        DocumentPageProcessed = 0;
     }
     public IndexStatus LastIndexStatus { get; set; }
     public string LastIndexErrorMessage { get; set; }
     public int ChunksProcessed { get; set; } = default;
-    public int DocumentProcessed { get; set; } = default;
+    public int DocumentPageProcessed { get; set; } = default;
+    public int DocumentPageProcessedBuffer => DocumentPageProcessed + 2;
+    public int TotalPageCount { get; set; } = default;
 }
 
 public enum IndexStatus

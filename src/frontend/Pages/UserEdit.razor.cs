@@ -1,16 +1,24 @@
-﻿using Shared.TableEntities;
+﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+
+using Shared.TableEntities;
 
 namespace ClientApp.Pages;
 
 public partial class UserEdit
 {
-    private MudForm _form;  
+    private MudForm _form;
 
     [Inject]
     public NavigationManager NavigationManager { get; set; }
 
     [Inject]
     public IUserApiClient UserApiClient { get; set; }
+    [Inject]
+    public required IJSRuntime JsRuntime { get; set; }
+
+    [Inject]
+    public ApiClient ApiClient { get; set; }
 
     [Parameter]
     public string? UserId { get; set; }
@@ -55,6 +63,7 @@ public partial class UserEdit
 
         if (string.IsNullOrEmpty(User.Id)) //new  
         {
+            User.Id = (new Random()).Next().ToString();
             var addedUser = await UserApiClient.AddUser(User);
             if (addedUser != null)
             {
@@ -98,4 +107,16 @@ public partial class UserEdit
     {
         NavigationManager.NavigateTo("/users-page");
     }
+
+    private async Task UploadFilesAsync(IBrowserFile file)
+    {
+        if (file != null)
+        {
+            var cookie = await JsRuntime.InvokeAsync<string>("getCookie", "XSRF-TOKEN");
+
+            var imageUrl = await ApiClient.UploadAvatarAsync(file, cookie);
+            User.ImageUrl = imageUrl.Replace("\"", string.Empty);
+        }
+    }
+
 }
