@@ -13,7 +13,6 @@ internal static class UserManagementEndpointsExtensions
         api.MapGet("users", OnGetAllUsersAsync);    
         api.MapGet("users/{userId}/email/{email}", OnGetUserDetailsAsync);    
         api.MapPut("users/{userId}", OnUpdateUserAsync);
-        api.MapPut("users", OnSaveChangesAsync);
         api.MapPost("users", OnAddUserAsync);
         api.MapDelete("users/{userId}/email/{email}", OnDeleteUserAsync);  
     }
@@ -52,12 +51,6 @@ internal static class UserManagementEndpointsExtensions
         var email = context.Request.RouteValues["email"]?.ToString();
         await repository.DeleteUserAsync(userId, email);
 
-        context.Response.StatusCode = StatusCodes.Status204NoContent;
-    }
-    private static async Task OnSaveChangesAsync(HttpContext context, IUserRepository repository)
-    {
-        var users = await context.Request.ReadFromJsonAsync<IEnumerable<UserEntity>>();
-        await repository.SaveUsersAsync(users);
         context.Response.StatusCode = StatusCodes.Status204NoContent;
     }
 }

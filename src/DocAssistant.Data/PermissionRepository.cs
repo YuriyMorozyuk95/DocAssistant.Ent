@@ -30,6 +30,7 @@ public class PermissionRepository : IPermissionRepository
             var response = await resultSetIterator.ReadNextAsync();
             results.AddRange(response.ToList());
         }
+
         return results;
     }
 
@@ -40,10 +41,32 @@ public class PermissionRepository : IPermissionRepository
 
     public async Task SavePermissionAsync(IEnumerable<PermissionEntity> permissions)
     {
+        var existingPermissions = await GetAllPermissionsAsync();
+
         foreach (var permission in permissions)
         {
-            permission.PartitionKey = permission.Id;
-            await _container.UpsertItemAsync(permission, new PartitionKey(permission.Id));
+            var existingPermission = existingPermissions.FirstOrDefault(p => p.Id == permission.Id);
+            if (existingPermission == null)  
+            {
+                permission.PartitionKey = permission.Id;
+                await _container.CreateItemAsync(permission, new PartitionKey(permission.Id));
+            }
+            else 
+            {
+                if (!existingPermission.Equals(permission))  
+                {
+                    await _container.ReplaceItemAsync(permission, permission.Id, new PartitionKey(permission.Id));
+                }
+            }
+        }
+
+        foreach (var existingPermission in existingPermissions)
+        {
+            if (!permissions.Any(p => p.Id == existingPermission.Id))
+            {
+                await _container.DeleteItemAsync<PermissionEntity>(existingPermission.Id,
+                    new PartitionKey(existingPermission.Id));
+            }
         }
     }
 }
