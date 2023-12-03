@@ -27,6 +27,15 @@
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7181;http://localhost:5167"
     },
+    "Stage": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Stage"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7181;http://localhost:5167"
+    },
     "Docker": {
       "commandName": "Docker",
       "launchBrowser": true,

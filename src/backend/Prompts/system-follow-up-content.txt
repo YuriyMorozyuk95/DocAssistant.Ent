@@ -3,10 +3,10 @@ Generate three follow-up question based on the answer you just generated.
 {answer}
 
 # Format of the response
-Return the follow-up questions as a json string list.
+Return the follow-up question as a json string list.
 e.g.
 [
-    "What is the business plan's objective?",
-    "What are the financial projections?",
-    "Who are the key team members in the plan?"
+    "What is the deductible?",
+    "What is the co-pay?"",
+    "What is the out-of-pocket maximum?"
 ]
