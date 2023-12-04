@@ -41,7 +41,7 @@ E-mail: Yurii.Moroziuk@hotmail.com
 Credly: https://www.credly.com/users/yurii-moroziuk/badges  
 GitHub: https://github.com/YuriyMorozyuk95  
   
-Christina Ozarko - .Net Developer  
+Khrystyna Halytska - .Net Developer  
 E-mail: christinaozarko@gmail.com  
 Credly: https://www.credly.com/users/khrystyna-ozarko  
 GitHub: https://github.com/KhrystynaOX  
