@@ -1,5 +1,5 @@
 # DocAssistant Enterprise  
-## Revolutionizing Document Management Systems  
+## Revolutionizing Document Access Systems
    
 As we navigate the digital world, AI tools have become crucial in aiding productivity and efficiency. DocAssistant Enterprise is a system that has evolved from the foundation of DocAssistant to not only work with individual documents but handle a multitude of them across any organization.  
    
