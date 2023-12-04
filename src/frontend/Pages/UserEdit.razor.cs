@@ -56,7 +56,7 @@ public partial class UserEdit
     {
         Saved = false;
 
-        if (string.IsNullOrEmpty(User.Email)) //new  
+        if (User.Id == null) //new  
         {
             var addedUser = await UserApiClient.AddUser(User);
             if (addedUser != null)
