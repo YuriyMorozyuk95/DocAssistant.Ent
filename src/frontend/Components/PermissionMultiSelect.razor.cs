@@ -18,16 +18,26 @@ public sealed partial class PermissionMultiSelect
     public bool IsEnabled { get; set; }  
 
     public Type PermissionEntityType { get; set; } = typeof(PermissionEntity);
-    private List<PermissionEntity> _items;
-
+    private List<PermissionEntity> _items = new List<PermissionEntity>();
+    private bool _isInitialized;
     protected override async Task OnInitializedAsync()  
     {
         _items = (await PermissionApiClient.GetAllPermissions()).ToList();
+       SelectedItems = new List<PermissionEntity>();
+        _isInitialized = true;
+        StateHasChanged();
     }  
 
     private async Task OnSelectedItemsChangedAsync(IEnumerable<PermissionEntity> arg)
     {
-        SelectedItems = arg.ToList();  
-        await SelectedItemsChanged.InvokeAsync(SelectedItems);
+        if (_isInitialized)
+        {
+            var argsIds = arg.Select(x => x.Id).ToList();
+            var selectedItemsFromItems = _items.Where(x => argsIds.Contains(x.Id)).ToList();
+
+            SelectedItems = selectedItemsFromItems;  
+            await SelectedItemsChanged.InvokeAsync(SelectedItems);
+            StateHasChanged();
+        }
     }
 }
