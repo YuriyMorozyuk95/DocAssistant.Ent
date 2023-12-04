@@ -2,7 +2,6 @@
 ## Revolutionizing Document Access Systems
 
 [![Hack Together: The Great .NET 8 Hack](https://img.shields.io/badge/Microsoft%20-Hack--Together-dotnet)](https://github.com/microsoft/hack-together-dotnetr)
-![image](https://github.com/YuriyMorozyuk95/DocAssistant.Ent/assets/27745979/ca68d071-ea9f-4dff-8865-0e00865024c4)
 
    
 As we navigate the digital world, AI tools have become crucial in aiding productivity and efficiency. DocAssistant Enterprise is a system that has evolved from the foundation of DocAssistant to not only work with individual documents but handle a multitude of them across any organization.  
