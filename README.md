@@ -49,6 +49,6 @@ GitHub: https://github.com/KhrystynaOX
 
 Oleksandr Bendziak - Business Analysis, AI Prompt Engineer, Quality Assurance  
 E-mail: oleksandr.bendziak@gmail.com  
-Credly:   
+Credly: https://www.credly.com/users/oleksandr-bendziak
 GitHub: https://github.com/OlksBndz  
   
