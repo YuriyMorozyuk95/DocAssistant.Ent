@@ -1,26 +1,25 @@
-﻿using System.Security;
-
-using Shared.TableEntities;
+﻿using Shared.TableEntities;
 
 namespace ClientApp.Pages;
 
 public sealed partial class PermissionTable
 {
-    private List<PermissionEntity> _permissions;  
-  
-    protected override void OnInitialized()  
-    {  
-        _permissions = MockPermissionService.GetPermissions();  
+    private List<PermissionEntity> _permissions;
+
+    [Inject]
+    public IPermissionApiClient PermissionApiClient { get; set; }
+
+    protected override async Task OnInitializedAsync()  
+    {
+        _permissions = (await PermissionApiClient.GetAllPermissions()).ToList();  
     }  
   
     private Task Create()  
     {
-        var lastId = _permissions?.Last()?.Id ?? 1.ToString();
-        lastId = lastId != null ? (int.Parse(lastId) + 1).ToString() : 1.ToString();
 
         var newPermission = new PermissionEntity()
         {   
-            Id = lastId,
+            Id = Guid.NewGuid().ToString(),
             Name = "New Permission",
         };
         _permissions.Add(newPermission);
@@ -33,10 +32,9 @@ public sealed partial class PermissionTable
         return Task.CompletedTask;
     }
 
-    private Task SaveChanges()
+    private async Task SaveChangesAsync()
     {
-        MockPermissionService.SaveChanges(_permissions);
-        return Task.CompletedTask;
+        await PermissionApiClient.SaveChanges(_permissions);
     }
 
     private Task Update(PermissionEntity context)

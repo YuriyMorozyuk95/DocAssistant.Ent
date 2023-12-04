@@ -5,7 +5,11 @@ using Shared.TableEntities;
 namespace DocAssistant.Data.Interfaces;
 public interface IPermissionRepository
 {
-    Task<PermissionEntity> GetPermissionByIdAsync(string id, string name);
+    Task<PermissionEntity> GetPermissionByIdAsync(string id);
 
-    Task<PermissionEntity> AddPermissionAsync(PermissionEntity permission);
+    Task<IEnumerable<PermissionEntity>> GetAllPermissionsAsync();
+
+    Task DeletePermissionAsync(string id);
+
+    Task SavePermissionAsync(IEnumerable<PermissionEntity> permissions);
 }

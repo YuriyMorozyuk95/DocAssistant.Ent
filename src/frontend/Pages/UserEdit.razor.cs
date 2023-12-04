@@ -1,7 +1,4 @@
-﻿using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
-
-using Shared.TableEntities;
+﻿using Shared.TableEntities;
 
 namespace ClientApp.Pages;
 
@@ -12,9 +9,8 @@ public partial class UserEdit
     [Inject]
     public NavigationManager NavigationManager { get; set; }
 
-    //TODO user instead of MockDataService
     [Inject]
-    public UserApiClient UserApiClient { get; set; }
+    public IUserApiClient UserApiClient { get; set; }
     [Inject]
     public required IJSRuntime JsRuntime { get; set; }
 
@@ -23,6 +19,9 @@ public partial class UserEdit
 
     [Parameter]
     public string? UserId { get; set; }
+
+    [Parameter]
+    public string? Email { get; set; }
 
     public UserEntity User { get; set; } = new UserEntity();
 
@@ -36,16 +35,14 @@ public partial class UserEdit
     {
         Saved = false;
 
-        int.TryParse(UserId, out var userId);
-
-        if (userId == 0) //new user is being created  
+        if (string.IsNullOrEmpty(Email)) //new user is being created  
         {
             //add some defaults  
             User = new UserEntity { };
         }
         else
         {
-            User = await MockUserService.GetUserDetails(int.Parse(UserId));
+            User = await UserApiClient.GetUserDetails(UserId, Email);
         }
     }
 
@@ -59,10 +56,9 @@ public partial class UserEdit
     {
         Saved = false;
 
-        if (string.IsNullOrEmpty(User.Id)) //new  
+        if (User.Id == null) //new  
         {
-            User.Id = (new Random()).Next().ToString();
-            var addedUser = await MockUserService.AddUser(User);
+            var addedUser = await UserApiClient.AddUser(User);
             if (addedUser != null)
             {
                 StatusClass = "alert-success";
@@ -78,7 +74,7 @@ public partial class UserEdit
         }
         else
         {
-            await MockUserService.UpdateUser(User);
+            await UserApiClient.UpdateUser(User);
             StatusClass = "alert-success";
             Message = "User updated successfully.";
             Saved = true;
@@ -93,7 +89,7 @@ public partial class UserEdit
 
     protected async Task DeleteUserAsync()
     {
-        await MockUserService.DeleteUser(User.Id);
+        await UserApiClient.DeleteUser(User.Id, User.Email);
 
         StatusClass = "alert-success";
         Message = "Deleted successfully";
