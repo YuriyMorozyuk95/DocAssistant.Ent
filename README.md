@@ -17,18 +17,18 @@ This project was made possible thanks to the combined efforts of our developers,
    
 ## Project Team:  
    
-Yurii Moroziuk – Project Lead /.Net Developer / DevOps \  
-E-mail: Yurii.Moroziuk@hotmail.com \  
-Credly: https://www.credly.com/users/yurii-moroziuk/badges \  
-GitHub: https://github.com/YuriyMorozyuk95 \ 
+Yurii Moroziuk – Project Lead /.Net Developer / DevOps  
+E-mail: Yurii.Moroziuk@hotmail.com  
+Credly: https://www.credly.com/users/yurii-moroziuk/badges  
+GitHub: https://github.com/YuriyMorozyuk95  
   
-Christina Ozarko - .Net Developer \ 
-E-mail: christinaozarko@gmail.com \ 
-Credly: https://www.credly.com/users/khrystyna-ozarko \ 
-GitHub: https://github.com/KhrystynaOX \ 
+Christina Ozarko - .Net Developer  
+E-mail: christinaozarko@gmail.com  
+Credly: https://www.credly.com/users/khrystyna-ozarko  
+GitHub: https://github.com/KhrystynaOX  
 
-Oleksandr Bendziak - Business Analysis, AI Prompt Engineer, Quality assurance \ 
-E-mail: oleksandr.bendziak@gmail.com \ 
-Credly: 
-GitHub: https://github.com/OlksBndz \ 
+Oleksandr Bendziak - Business Analysis, AI Prompt Engineer, Quality Assurance  
+E-mail: oleksandr.bendziak@gmail.com  
+Credly:   
+GitHub: https://github.com/OlksBndz  
   
