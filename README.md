@@ -3,7 +3,8 @@
 
 [![Hack Together: The Great .NET 8 Hack](https://img.shields.io/badge/Microsoft%20-Hack--Together-dotnet)](https://github.com/microsoft/hack-together-dotnetr)
 
-   
+The Url for Web App: https://hack-togather-wa.azurewebsites.net/
+
 As we navigate the digital world, AI tools have become crucial in aiding productivity and efficiency. DocAssistant Enterprise is a system that has evolved from the foundation of DocAssistant to not only work with individual documents but handle a multitude of them across any organization.  
    
 DocAssistant Enterprise is designed to revolutionize your document management systems. It allows a seamless transition between various access levels within a company, making data retrieval a hassle-free experience for all users. Whether you're a business analyst needing developer-level data or a CEO requiring an overview of all documents, our system has got you covered.  
